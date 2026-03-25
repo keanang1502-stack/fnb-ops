@@ -286,16 +286,35 @@ async function doLogout() {
 }
 
 sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    currentUser = session.user;
-    await loadUserContext();
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    await loadAppData();
-    navigate('inventory');
-  } else {
+  if (event === 'SIGNED_OUT') {
     document.getElementById('auth-screen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
+    return;
+  }
+  if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+    currentUser = session.user;
+    try {
+      const { data: profile, error } = await sb.from('profiles')
+        .select('*, organisations(*)')
+        .eq('id', currentUser.id)
+        .maybeSingle();
+      if (error) throw error;
+      if (!profile) { showAuthError('Profile not found. Please contact support.'); return; }
+      currentProfile = profile;
+      currentOrg = profile.organisations;
+      document.getElementById('org-name-badge').textContent = currentOrg?.name || 'My Cafe';
+      const [{ data: items }, { data: suppliers }] = await Promise.all([
+        sb.from('items').select('*, suppliers(name)').eq('org_id', currentOrg.id).eq('is_active', true).order('name'),
+        sb.from('suppliers').select('*').eq('org_id', currentOrg.id).order('name')
+      ]);
+      appData.items = items || [];
+      appData.suppliers = suppliers || [];
+      document.getElementById('auth-screen').style.display = 'none';
+      document.getElementById('app').style.display = '';
+      navigate('inventory');
+    } catch(e) {
+      showAuthError('Login failed: ' + e.message);
+    }
   }
 });
 
