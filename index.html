@@ -27,8 +27,6 @@
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
-
-  /* ── AUTH ── */
   #auth-screen { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
   .auth-card { background: var(--white); border-radius: 16px; padding: 36px; width: 100%; max-width: 400px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); }
   .auth-logo { font-size: 28px; font-weight: 700; color: var(--brand); margin-bottom: 4px; }
@@ -36,30 +34,22 @@
   .auth-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
   .auth-tab { flex: 1; padding: 8px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-muted); transition: all 0.15s; border: none; background: none; }
   .auth-tab.active { background: var(--white); color: var(--brand); box-shadow: var(--shadow); }
-
-  /* ── LAYOUT ── */
   #app { display: none; min-height: 100vh; }
   .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .topbar-title { font-weight: 700; font-size: 17px; color: var(--brand-dark); }
   .topbar-right { display: flex; align-items: center; gap: 12px; }
   .org-badge { font-size: 12px; background: var(--brand-light); color: var(--brand); padding: 4px 10px; border-radius: 20px; font-weight: 600; }
   .content { padding: 16px; max-width: 700px; margin: 0 auto; padding-bottom: 80px; }
-
-  /* ── NAV ── */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--white); border-top: 1px solid var(--border); display: flex; z-index: 100; }
   .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 12px; cursor: pointer; color: var(--text-muted); font-size: 11px; gap: 4px; transition: color 0.15s; border: none; background: none; }
   .nav-item.active { color: var(--brand); }
   .nav-item svg { width: 22px; height: 22px; }
-
-  /* ── CARDS & FORMS ── */
   .card { background: var(--white); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); margin-bottom: 12px; }
   .card-title { font-weight: 600; font-size: 15px; margin-bottom: 12px; color: var(--text); }
   label { display: block; font-size: 13px; font-weight: 500; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px; }
   input, select, textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; color: var(--text); background: var(--white); outline: none; transition: border-color 0.15s; font-family: inherit; }
   input:focus, select:focus, textarea:focus { border-color: var(--brand); }
   textarea { min-height: 80px; resize: vertical; }
-
-  /* ── BUTTONS ── */
   .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 11px 18px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.15s; width: 100%; }
   .btn-primary { background: var(--brand); color: #fff; }
   .btn-primary:hover { background: var(--brand-dark); }
@@ -69,74 +59,49 @@
   .btn-sm { padding: 7px 12px; font-size: 13px; width: auto; }
   .btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .btn-row { display: flex; gap: 8px; margin-top: 16px; }
-
-  /* ── STATUS BADGES ── */
   .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
   .badge-low { background: var(--red-light); color: var(--red); }
   .badge-ok { background: var(--green-light); color: var(--green); }
   .badge-full { background: #EEF2FF; color: #4F46E5; }
   .badge-critical { background: var(--red); color: #fff; }
-
-  /* ── ITEM ROWS ── */
   .item-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .item-row:last-child { border-bottom: none; }
   .item-info { flex: 1; min-width: 0; }
   .item-name { font-weight: 600; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .item-meta { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-
-  /* ── STATUS SELECTOR ── */
   .status-row { display: flex; gap: 6px; }
   .status-btn { flex: 1; padding: 8px 4px; border-radius: 8px; border: 2px solid var(--border); background: var(--bg); font-size: 13px; font-weight: 600; cursor: pointer; text-align: center; transition: all 0.15s; }
   .status-btn.low.selected { border-color: var(--red); background: var(--red-light); color: var(--red); }
   .status-btn.ok.selected { border-color: var(--green); background: var(--green-light); color: var(--green); }
   .status-btn.full.selected { border-color: #4F46E5; background: #EEF2FF; color: #4F46E5; }
   .status-btn:not(.selected) { color: var(--text-muted); }
-
-  /* ── SECTION HEADER ── */
   .section-header { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
-
-  /* ── SUPPLIER CARD ── */
   .supplier-card { background: var(--white); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 10px; }
   .supplier-name { font-weight: 700; font-size: 15px; }
   .supplier-meta { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
   .supplier-actions { display: flex; gap: 8px; margin-top: 10px; }
-
-  /* ── ORDER QUEUE ── */
   .order-group { background: var(--white); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
   .order-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
   .order-group-name { font-weight: 700; font-size: 15px; }
   .order-item-list { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
   .order-item-list li { padding: 4px 0; }
-
-  /* ── TABS ── */
   .tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; margin-bottom: 16px; }
   .tab { flex: 1; padding: 8px 4px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border: none; background: none; transition: all 0.15s; }
   .tab.active { background: var(--white); color: var(--brand); box-shadow: var(--shadow); }
-
-  /* ── MODAL ── */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
   .modal { background: var(--white); border-radius: 16px 16px 0 0; padding: 20px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
   .modal-title { font-weight: 700; font-size: 17px; margin-bottom: 16px; }
   .modal-close { float: right; background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); margin-top: -4px; }
-
-  /* ── SEARCH ── */
   .search-bar { position: relative; margin-bottom: 12px; }
   .search-bar input { padding-left: 36px; }
   .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-
-  /* ── EMPTY STATE ── */
   .empty { text-align: center; padding: 40px 20px; color: var(--text-muted); }
   .empty-icon { font-size: 40px; margin-bottom: 10px; }
-
-  /* ── ALERT ── */
   .alert { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
   .alert-error { background: var(--red-light); color: var(--red); }
   .alert-success { background: var(--green-light); color: var(--green); }
-
-  /* ── INVITE ── */
   .invite-box { background: var(--brand-light); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
   .invite-code { font-family: monospace; font-size: 20px; font-weight: 700; color: var(--brand-dark); letter-spacing: 4px; text-align: center; margin: 8px 0; }
-
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-muted); gap: 10px; }
@@ -144,698 +109,9 @@
 </head>
 <body>
 
-<!-- ── AUTH SCREEN ───────────────────────────────────────── -->
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">📦 F&B Ops</div>
     <div class="auth-sub">Inventory & ordering for cafés</div>
     <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">Log In</button>
-      <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
-    </div>
-    <div id="auth-error" class="alert alert-error" style="display:none"></div>
-
-    <!-- LOGIN -->
-    <div id="login-form">
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="you@example.com"/>
-      <label>Password</label>
-      <input type="password" id="login-password" placeholder="••••••••"/>
-      <div style="margin-top:16px">
-        <button class="btn btn-primary" onclick="doLogin()">Log In</button>
-      </div>
-    </div>
-
-    <!-- SIGNUP -->
-    <div id="signup-form" style="display:none">
-      <label>Your name</label>
-      <input type="text" id="signup-name" placeholder="e.g. Sarah"/>
-      <label>Email</label>
-      <input type="email" id="signup-email" placeholder="you@example.com"/>
-      <label>Password</label>
-      <input type="password" id="signup-password" placeholder="Min. 6 characters"/>
-
-      <div style="margin-top:16px; background:var(--bg); border-radius:8px; padding:12px;">
-        <div style="font-weight:600; font-size:14px; margin-bottom:8px;">Are you…</div>
-        <label style="margin:0; display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input type="radio" name="signup-role" value="owner" checked style="width:auto"/> Opening a new café account
-        </label>
-        <div id="new-org-fields">
-          <label>Café name</label>
-          <input type="text" id="signup-org-name" placeholder="e.g. Bag Me Up"/>
-        </div>
-        <label style="margin-top:8px; display:flex; align-items:center; gap:8px; cursor:pointer;">
-          <input type="radio" name="signup-role" value="staff" style="width:auto"/> Joining an existing café (staff)
-        </label>
-        <div id="join-org-fields" style="display:none">
-          <label>Invite code from your owner</label>
-          <input type="text" id="signup-invite-code" placeholder="6-character code"/>
-        </div>
-      </div>
-
-      <div style="margin-top:16px">
-        <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ── MAIN APP ───────────────────────────────────────────── -->
-<div id="app">
-  <div class="topbar">
-    <div class="topbar-title">📦 F&B Ops</div>
-    <div class="topbar-right">
-      <span class="org-badge" id="org-name-badge">—</span>
-      <button class="btn-ghost btn-sm" onclick="doLogout()">Out</button>
-    </div>
-  </div>
-
-  <div class="content" id="page-content">
-    <div class="loading"><div class="spinner" style="border-top-color:var(--brand)"></div> Loading…</div>
-  </div>
-
-  <nav class="bottom-nav">
-    <button class="nav-item active" onclick="navigate('inventory')" id="nav-inventory">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
-      Inventory
-    </button>
-    <button class="nav-item" onclick="navigate('log')" id="nav-log">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      Log
-    </button>
-    <button class="nav-item" onclick="navigate('orders')" id="nav-orders">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 9m12-9l2 9M9 21h6"/></svg>
-      Orders
-    </button>
-    <button class="nav-item" onclick="navigate('suppliers')" id="nav-suppliers">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
-      Suppliers
-    </button>
-    <button class="nav-item" onclick="navigate('settings')" id="nav-settings">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-      Settings
-    </button>
-  </nav>
-</div>
-
-<!-- ── MODAL CONTAINER ───────────────────────────────────── -->
-<div id="modal-container"></div>
-
-<script>
-// ── SUPABASE INIT ────────────────────────────────────────────
-const SUPABASE_URL = 'https://wkpwtqfzpytnywsveggg.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndrcHd0cWZ6cHl0bnl3c3ZlZ2dnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0MzM0MDcsImV4cCI6MjA5MDAwOTQwN30.J755bh3Ep7rbcN_8uGlJCh6ainKm-KPtV2-Dl227rPw';
-const { createClient } = supabase;
-const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// ── STATE ────────────────────────────────────────────────────
-let currentUser = null;
-let currentProfile = null;
-let currentOrg = null;
-let currentPage = 'inventory';
-let appData = { items: [], suppliers: [] };
-
-// ── AUTH HELPERS ─────────────────────────────────────────────
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
-  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
-  document.getElementById('signup-form').style.display = tab === 'signup' ? '' : 'none';
-  clearAuthError();
-}
-
-document.querySelectorAll('input[name="signup-role"]').forEach(r => {
-  r.addEventListener('change', () => {
-    const isOwner = r.value === 'owner' && r.checked;
-    document.getElementById('new-org-fields').style.display = isOwner ? '' : 'none';
-    document.getElementById('join-org-fields').style.display = isOwner ? 'none' : '';
-  });
-});
-
-function showAuthError(msg) {
-  const el = document.getElementById('auth-error');
-  el.textContent = msg; el.style.display = '';
-}
-function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
-
-async function doLogin() {
-  clearAuthError();
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!email || !password) return showAuthError('Please fill in all fields.');
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) showAuthError(error.message);
-}
-
-async function doSignup() {
-  clearAuthError();
-  const name = document.getElementById('signup-name').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
-  const role = document.querySelector('input[name="signup-role"]:checked').value;
-
-  if (!name || !email || !password) return showAuthError('Please fill in all fields.');
-  if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
-
-  let orgName = '', inviteCode = '';
-  if (role === 'owner') {
-    orgName = document.getElementById('signup-org-name').value.trim();
-    if (!orgName) return showAuthError('Please enter your café name.');
-  } else {
-    inviteCode = document.getElementById('signup-invite-code').value.trim().toUpperCase();
-    if (!inviteCode) return showAuthError('Please enter an invite code.');
-  }
-
-  const { data, error } = await sb.auth.signUp({ email, password });
-  if (error) return showAuthError(error.message);
-
-  const userId = data.user.id;
-
-  if (role === 'owner') {
-    const { data: orgId, error: orgErr } = await sb.rpc('create_org_for_new_user', {
-      user_id: userId, org_name: orgName, user_full_name: name
-    });
-    if (orgErr) return showAuthError('Account created but org setup failed. Please contact support.');
-  } else {
-    // Staff joining via invite code — look up org by invite code
-    const { data: org, error: orgErr } = await sb.from('organisations')
-      .select('id').eq('invite_code', inviteCode).single();
-    if (orgErr || !org) return showAuthError('Invalid invite code. Ask your owner for the correct code.');
-    await sb.from('profiles').insert({ id: userId, org_id: org.id, full_name: name, role: 'staff' });
-  }
-}
-
-async function doLogout() {
-  await sb.auth.signOut();
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-  currentUser = currentProfile = currentOrg = null;
-}
-
-// ── BOOT ─────────────────────────────────────────────────────
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (session?.user) {
-    currentUser = session.user;
-    await loadUserContext();
-    document.getElementById('auth-screen').style.display = 'none';
-    document.getElementById('app').style.display = '';
-    await loadAppData();
-    navigate('inventory');
-  } else {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-  }
-});
-
-async function loadUserContext() {
-  const { data: profile } = await sb.from('profiles').select('*, organisations(*)').eq('id', currentUser.id).single();
-  if (profile) {
-    currentProfile = profile;
-    currentOrg = profile.organisations;
-    document.getElementById('org-name-badge').textContent = currentOrg?.name || 'My Café';
-  }
-}
-
-async function loadAppData() {
-  const [{ data: items }, { data: suppliers }] = await Promise.all([
-    sb.from('items').select('*, suppliers(name)').eq('org_id', currentOrg.id).eq('is_active', true).order('name'),
-    sb.from('suppliers').select('*').eq('org_id', currentOrg.id).order('name')
-  ]);
-  appData.items = items || [];
-  appData.suppliers = suppliers || [];
-}
-
-// ── NAVIGATION ───────────────────────────────────────────────
-function navigate(page) {
-  currentPage = page;
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`nav-${page}`)?.classList.add('active');
-  const pages = { inventory: renderInventory, log: renderLog, orders: renderOrders, suppliers: renderSuppliers, settings: renderSettings };
-  pages[page]?.();
-}
-
-function setContent(html) { document.getElementById('page-content').innerHTML = html; }
-
-// ── INVENTORY PAGE ───────────────────────────────────────────
-async function renderInventory() {
-  await loadAppData();
-  const { items } = appData;
-  const lowItems = items.filter(i => i.status === 'low' || i.status === 'critical');
-  const categories = [...new Set(items.map(i => i.category).filter(Boolean))].sort();
-
-  let html = '';
-
-  if (lowItems.length) {
-    html += `<div class="section-header">🔴 Needs Ordering (${lowItems.length})</div>`;
-    html += `<div class="card">`;
-    lowItems.forEach(item => {
-      html += itemRow(item, true);
-    });
-    html += `</div>`;
-  }
-
-  html += `
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px">
-      <div class="section-header" style="margin:0">All Items</div>
-      <button class="btn-ghost btn-sm" onclick="showAddItemModal()">+ Add Item</button>
-    </div>
-    <div class="search-bar">
-      <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Search items…" oninput="filterItems(this.value)" id="item-search"/>
-    </div>`;
-
-  // Category tabs
-  const tabs = ['All', 'Food', 'Non-Food', ...categories.filter(c => c !== 'Food' && c !== 'Non-Food')];
-  html += `<div class="tabs" style="overflow-x:auto; flex-wrap:nowrap">`;
-  tabs.forEach((t,i) => html += `<button class="tab${i===0?' active':''}" onclick="filterCategory(this,'${t}')">${t}</button>`);
-  html += `</div>`;
-
-  html += `<div class="card" id="items-list">`;
-  if (!items.length) html += `<div class="empty"><div class="empty-icon">📦</div><div>No items yet. Add your first item!</div></div>`;
-  else items.forEach(item => { html += itemRow(item); });
-  html += `</div>`;
-
-  setContent(html);
-}
-
-function itemRow(item, compact = false) {
-  const statusMap = { low: 'badge-low', ok: 'badge-ok', full: 'badge-full', critical: 'badge-critical' };
-  return `
-    <div class="item-row" data-category="${item.category||''}" data-type="${item.type}">
-      <div class="item-info">
-        <div class="item-name">${item.name}</div>
-        <div class="item-meta">${item.category || ''} ${item.suppliers?.name ? '· ' + item.suppliers.name : ''} ${item.unit ? '· ' + item.unit : ''}</div>
-      </div>
-      <span class="badge ${statusMap[item.status] || 'badge-ok'}">${item.status || 'ok'}</span>
-      <button class="btn-ghost btn-sm" onclick="showEditItemModal('${item.id}')">Edit</button>
-    </div>`;
-}
-
-function filterItems(query) {
-  const q = query.toLowerCase();
-  document.querySelectorAll('.item-row').forEach(row => {
-    const name = row.querySelector('.item-name').textContent.toLowerCase();
-    row.style.display = name.includes(q) ? '' : 'none';
-  });
-}
-
-function filterCategory(btn, category) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.item-row').forEach(row => {
-    const cat = row.dataset.category;
-    const type = row.dataset.type;
-    const show = category === 'All' || cat === category ||
-      (category === 'Food' && type === 'food') ||
-      (category === 'Non-Food' && type === 'non-food');
-    row.style.display = show ? '' : 'none';
-  });
-}
-
-// ── LOG PAGE ─────────────────────────────────────────────────
-function renderLog() {
-  const { items } = appData;
-  const keyItems = items.filter(i => i.status === 'low' || i.status === 'critical' || true); // show all
-
-  let html = `
-    <div class="card">
-      <div class="card-title">📋 End-of-Shift Status Check</div>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px">Quick tap — is each item low, okay, or full?</p>`;
-
-  if (!items.length) {
-    html += `<div class="empty"><div class="empty-icon">📋</div><div>No items yet. Add items in Inventory first.</div></div>`;
-  } else {
-    items.forEach(item => {
-      html += `
-        <div class="item-row">
-          <div class="item-info">
-            <div class="item-name">${item.name}</div>
-            <div class="item-meta">${item.category || ''}</div>
-          </div>
-          <div class="status-row">
-            <button class="status-btn low ${item.status==='low'?'selected':''}" onclick="setStatus(this,'${item.id}','low')">🔴 Low</button>
-            <button class="status-btn ok ${item.status==='ok'||!item.status?'selected':''}" onclick="setStatus(this,'${item.id}','ok')">🟡 OK</button>
-            <button class="status-btn full ${item.status==='full'?'selected':''}" onclick="setStatus(this,'${item.id}','full')">🟢 Full</button>
-          </div>
-        </div>`;
-    });
-    html += `
-      <div class="btn-row">
-        <button class="btn btn-primary" onclick="submitLog()">Save Status Check</button>
-      </div>`;
-  }
-  html += `</div>`;
-  setContent(html);
-}
-
-let pendingStatuses = {};
-
-async function setStatus(btn, itemId, status) {
-  const row = btn.closest('.item-row');
-  row.querySelectorAll('.status-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  pendingStatuses[itemId] = status;
-}
-
-async function submitLog() {
-  const statuses = { ...pendingStatuses };
-  // Pre-fill current statuses for items not changed
-  appData.items.forEach(item => {
-    if (!statuses[item.id]) statuses[item.id] = item.status || 'ok';
-  });
-
-  const updates = Object.entries(statuses).map(([id, status]) =>
-    sb.from('items').update({ status }).eq('id', id).eq('org_id', currentOrg.id)
-  );
-  const logs = Object.entries(statuses).map(([item_id, status]) => ({
-    org_id: currentOrg.id, item_id, logged_by: currentUser.id,
-    log_type: 'status_check', status
-  }));
-
-  await Promise.all(updates);
-  await sb.from('stock_logs').insert(logs);
-  pendingStatuses = {};
-  showToast('Status check saved! ✅');
-  await loadAppData();
-  renderLog();
-}
-
-// ── ORDERS PAGE ───────────────────────────────────────────────
-async function renderOrders() {
-  await loadAppData();
-  const lowItems = appData.items.filter(i => i.status === 'low' || i.status === 'critical');
-
-  // Group by supplier
-  const bySupplier = {};
-  lowItems.forEach(item => {
-    const suppId = item.supplier_id || '__unknown__';
-    if (!bySupplier[suppId]) bySupplier[suppId] = { supplier: appData.suppliers.find(s => s.id === suppId), items: [] };
-    bySupplier[suppId].items.push(item);
-  });
-
-  let html = `<div class="section-header">Order Queue</div>`;
-
-  if (!lowItems.length) {
-    html += `<div class="card"><div class="empty"><div class="empty-icon">✅</div><div>Nothing to order — all items are OK or Full!</div></div></div>`;
-  } else {
-    Object.entries(bySupplier).forEach(([suppId, group]) => {
-      const sup = group.supplier;
-      const today = new Date().toLocaleDateString('en-SG', { weekday: 'long' });
-      const noDelivery = sup?.no_delivery_days?.includes(today);
-
-      html += `<div class="order-group">
-        <div class="order-group-header">
-          <div>
-            <div class="order-group-name">${sup?.name || 'Unknown Supplier'}</div>
-            ${noDelivery ? `<div style="font-size:12px; color:var(--red)">⚠️ No delivery today (${today})</div>` : ''}
-            ${sup?.moq ? `<div style="font-size:12px; color:var(--text-muted)">MOQ: ${sup.moq}</div>` : ''}
-          </div>
-        </div>
-        <ul class="order-item-list">
-          ${group.items.map(i => `<li>• ${i.name}${i.reorder_qty ? ' — ' + i.reorder_qty + ' ' + (i.unit||'') : ''}</li>`).join('')}
-        </ul>
-        <div class="btn-row">
-          ${sup?.whatsapp_link ? `<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none">💬 Open WhatsApp</a>` : ''}
-          <button class="btn btn-secondary btn-sm" onclick="showOrderMessage('${suppId}')">📋 View Message</button>
-        </div>
-      </div>`;
-    });
-  }
-
-  // Past orders section
-  const { data: pastOrders } = await sb.from('orders')
-    .select('*, suppliers(name)').eq('org_id', currentOrg.id)
-    .order('created_at', { ascending: false }).limit(10);
-
-  if (pastOrders?.length) {
-    html += `<div class="section-header">Recent Orders</div><div class="card">`;
-    pastOrders.forEach(o => {
-      html += `<div class="item-row">
-        <div class="item-info">
-          <div class="item-name">${o.suppliers?.name || 'Unknown'}</div>
-          <div class="item-meta">${new Date(o.created_at).toLocaleDateString('en-SG')} · ${o.status}</div>
-        </div>
-        <span class="badge ${o.status==='sent'?'badge-ok':'badge-full'}">${o.status}</span>
-      </div>`;
-    });
-    html += `</div>`;
-  }
-
-  setContent(html);
-}
-
-async function showOrderMessage(suppId) {
-  const group = appData.items.filter(i => (i.supplier_id || '__unknown__') === suppId && (i.status === 'low' || i.status === 'critical'));
-  const sup = appData.suppliers.find(s => s.id === suppId);
-  const itemList = group.map(i => `- ${i.name}${i.reorder_qty ? ': ' + i.reorder_qty + ' ' + (i.unit||'') : ''}`).join('\n');
-  const today = new Date().toLocaleDateString('en-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  let msg = sup?.message_template
-    ? sup.message_template.replace('{items}', itemList).replace('{date}', today)
-    : `Hi! Ordering for ${currentOrg.name}:\n\n${itemList}\n\nPlease deliver ASAP. Thank you!`;
-
-  showModal(`
-    <div class="modal-title">Order Message — ${sup?.name || 'Supplier'}
-      <button class="modal-close" onclick="closeModal()">×</button>
-    </div>
-    <textarea id="order-msg-text" style="min-height:160px; font-family:monospace; font-size:13px">${msg}</textarea>
-    <div class="btn-row" style="margin-top:12px">
-      <button class="btn btn-secondary" onclick="copyOrderMsg()">📋 Copy</button>
-      ${sup?.whatsapp_link ? `<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 Open WhatsApp</a>` : ''}
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-secondary" onclick="markOrderSent('${suppId}')">✅ Mark as Sent</button>
-    </div>
-  `);
-}
-
-function copyOrderMsg() {
-  const txt = document.getElementById('order-msg-text').value;
-  navigator.clipboard.writeText(txt).then(() => showToast('Copied! ✅'));
-}
-
-async function markOrderSent(suppId) {
-  const sup = appData.suppliers.find(s => s.id === suppId);
-  const items = appData.items.filter(i => (i.supplier_id||'__unknown__') === suppId && (i.status==='low'||i.status==='critical'));
-  const msg = document.getElementById('order-msg-text')?.value || '';
-  const { data: order } = await sb.from('orders').insert({
-    org_id: currentOrg.id, supplier_id: suppId === '__unknown__' ? null : suppId,
-    created_by: currentUser.id, status: 'sent', message_text: msg, ordered_at: new Date()
-  }).select().single();
-  if (order && items.length) {
-    await sb.from('order_items').insert(items.map(i => ({ order_id: order.id, item_id: i.id, quantity: i.reorder_qty || 1, unit: i.unit })));
-  }
-  closeModal();
-  showToast('Order marked as sent ✅');
-  await loadAppData();
-  renderOrders();
-}
-
-// ── SUPPLIERS PAGE ────────────────────────────────────────────
-function renderSuppliers() {
-  const { suppliers } = appData;
-  let html = `
-    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
-      <div class="section-header" style="margin:0">Suppliers (${suppliers.length})</div>
-      <button class="btn-ghost btn-sm" onclick="showAddSupplierModal()">+ Add Supplier</button>
-    </div>`;
-
-  if (!suppliers.length) {
-    html += `<div class="card"><div class="empty"><div class="empty-icon">🤝</div><div>No suppliers yet. Add your first one!</div></div></div>`;
-  } else {
-    suppliers.forEach(sup => {
-      const noDelivDays = sup.no_delivery_days?.join(', ') || '—';
-      html += `<div class="supplier-card">
-        <div class="supplier-name">${sup.name}</div>
-        <div class="supplier-meta">
-          ${sup.contact_name ? sup.contact_name + ' · ' : ''}${sup.channel || ''}<br/>
-          MOQ: ${sup.moq || '—'} · Lead time: ${sup.lead_time_days || 1}d · No delivery: ${noDelivDays}
-        </div>
-        <div class="supplier-actions">
-          ${sup.whatsapp_link ? `<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">💬 WhatsApp</a>` : ''}
-          <button class="btn btn-secondary btn-sm" onclick="showEditSupplierModal('${sup.id}')">Edit</button>
-        </div>
-      </div>`;
-    });
-  }
-  setContent(html);
-}
-
-// ── SETTINGS PAGE ─────────────────────────────────────────────
-async function renderSettings() {
-  // Generate a simple invite code based on org id
-  const code = currentOrg?.id?.slice(0,6).toUpperCase() || '——';
-  let html = `
-    <div class="card">
-      <div class="card-title">☕ ${currentOrg?.name}</div>
-      <div style="font-size:14px; color:var(--text-muted)">Owner: ${currentProfile?.full_name}</div>
-      <div style="font-size:14px; color:var(--text-muted)">${currentUser?.email}</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">👥 Invite Staff</div>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px">Share this code with your staff so they can join your café on the app.</p>
-      <div class="invite-box">
-        <div style="font-size:13px; color:var(--brand); font-weight:600">Invite Code</div>
-        <div class="invite-code">${code}</div>
-        <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Copied!'))">Copy Code</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">⚙️ Account</div>
-      <button class="btn btn-danger" onclick="doLogout()">Log Out</button>
-    </div>`;
-  setContent(html);
-}
-
-// ── MODALS: ADD / EDIT ITEM ────────────────────────────────────
-function showAddItemModal() {
-  const supplierOptions = appData.suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  showModal(`
-    <div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div>
-    <label>Item Name</label><input id="m-name" placeholder="e.g. Oat Milk"/>
-    <label>Category</label><input id="m-category" placeholder="e.g. Dairy, Coffee, Bakery"/>
-    <label>Type</label>
-    <select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select>
-    <label>Unit</label><input id="m-unit" placeholder="e.g. litres, packs, kg"/>
-    <label>Supplier</label>
-    <select id="m-supplier"><option value="">— No supplier —</option>${supplierOptions}</select>
-    <label>Reorder Quantity</label><input id="m-reorder-qty" type="number" placeholder="e.g. 2"/>
-    <label>Initial Status</label>
-    <select id="m-status"><option value="ok">OK</option><option value="low">Low</option><option value="full">Full</option></select>
-    <div class="btn-row"><button class="btn btn-primary" onclick="saveItem()">Add Item</button></div>
-  `);
-}
-
-function showEditItemModal(itemId) {
-  const item = appData.items.find(i => i.id === itemId);
-  if (!item) return;
-  const supplierOptions = appData.suppliers.map(s =>
-    `<option value="${s.id}" ${s.id===item.supplier_id?'selected':''}>${s.name}</option>`).join('');
-  showModal(`
-    <div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div>
-    <label>Item Name</label><input id="m-name" value="${item.name}"/>
-    <label>Category</label><input id="m-category" value="${item.category||''}"/>
-    <label>Type</label>
-    <select id="m-type"><option value="food" ${item.type==='food'?'selected':''}>Food</option><option value="non-food" ${item.type==='non-food'?'selected':''}>Non-Food</option></select>
-    <label>Unit</label><input id="m-unit" value="${item.unit||''}"/>
-    <label>Supplier</label>
-    <select id="m-supplier"><option value="">— No supplier —</option>${supplierOptions}</select>
-    <label>Reorder Quantity</label><input id="m-reorder-qty" type="number" value="${item.reorder_qty||''}"/>
-    <label>Status</label>
-    <select id="m-status">
-      <option value="ok" ${item.status==='ok'?'selected':''}>OK</option>
-      <option value="low" ${item.status==='low'?'selected':''}>Low</option>
-      <option value="full" ${item.status==='full'?'selected':''}>Full</option>
-    </select>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveItem('${itemId}')">Save</button>
-      <button class="btn btn-danger" onclick="archiveItem('${itemId}')">Remove</button>
-    </div>
-  `);
-}
-
-async function saveItem(itemId) {
-  const payload = {
-    org_id: currentOrg.id,
-    name: document.getElementById('m-name').value.trim(),
-    category: document.getElementById('m-category').value.trim(),
-    type: document.getElementById('m-type').value,
-    unit: document.getElementById('m-unit').value.trim(),
-    supplier_id: document.getElementById('m-supplier').value || null,
-    reorder_qty: parseFloat(document.getElementById('m-reorder-qty').value) || 0,
-    status: document.getElementById('m-status').value,
-  };
-  if (!payload.name) return showToast('Please enter an item name');
-  if (itemId) await sb.from('items').update(payload).eq('id', itemId);
-  else await sb.from('items').insert(payload);
-  closeModal();
-  await loadAppData();
-  renderInventory();
-}
-
-async function archiveItem(itemId) {
-  await sb.from('items').update({ is_active: false }).eq('id', itemId);
-  closeModal();
-  await loadAppData();
-  renderInventory();
-}
-
-// ── MODALS: ADD / EDIT SUPPLIER ───────────────────────────────
-function showAddSupplierModal() { showSupplierModal(null); }
-function showEditSupplierModal(id) { showSupplierModal(appData.suppliers.find(s => s.id === id)); }
-
-function showSupplierModal(sup) {
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const noDel = sup?.no_delivery_days || [];
-  const dayChecks = days.map(d =>
-    `<label style="display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer">
-      <input type="checkbox" value="${d}" ${noDel.includes(d)?'checked':''} style="width:auto"/> ${d}
-    </label>`).join('');
-
-  showModal(`
-    <div class="modal-title">${sup ? 'Edit' : 'Add'} Supplier <button class="modal-close" onclick="closeModal()">×</button></div>
-    <label>Supplier Name</label><input id="s-name" value="${sup?.name||''}"/>
-    <label>Contact Name</label><input id="s-contact" value="${sup?.contact_name||''}" placeholder="e.g. David"/>
-    <label>Channel</label>
-    <select id="s-channel">
-      <option value="whatsapp" ${sup?.channel==='whatsapp'?'selected':''}>WhatsApp</option>
-      <option value="email" ${sup?.channel==='email'?'selected':''}>Email</option>
-      <option value="phone" ${sup?.channel==='phone'?'selected':''}>Phone</option>
-    </select>
-    <label>WhatsApp Group Link</label>
-    <input id="s-wa" value="${sup?.whatsapp_link||''}" placeholder="https://chat.whatsapp.com/... or wa.me/65..."/>
-    <label>Email</label><input id="s-email" value="${sup?.email||''}" placeholder="supplier@example.com"/>
-    <label>MOQ</label><input id="s-moq" value="${sup?.moq||''}" placeholder="e.g. $30 minimum"/>
-    <label>Lead Time (days)</label><input id="s-lead" type="number" value="${sup?.lead_time_days||1}"/>
-    <label>No Delivery Days</label>${dayChecks}
-    <label>Order Message Template</label>
-    <textarea id="s-template" placeholder="Hi! Ordering for {café name}:\n{items}\nThank you!">${sup?.message_template||''}</textarea>
-    <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveSupplier('${sup?.id||''}')">Save</button>
-    </div>
-  `);
-}
-
-async function saveSupplier(supId) {
-  const noDel = [...document.querySelectorAll('#modal-container input[type=checkbox]:checked')].map(c => c.value);
-  const payload = {
-    org_id: currentOrg.id,
-    name: document.getElementById('s-name').value.trim(),
-    contact_name: document.getElementById('s-contact').value.trim(),
-    channel: document.getElementById('s-channel').value,
-    whatsapp_link: document.getElementById('s-wa').value.trim(),
-    email: document.getElementById('s-email').value.trim(),
-    moq: document.getElementById('s-moq').value.trim(),
-    lead_time_days: parseInt(document.getElementById('s-lead').value) || 1,
-    no_delivery_days: noDel,
-    message_template: document.getElementById('s-template').value.trim(),
-  };
-  if (!payload.name) return showToast('Please enter a supplier name');
-  if (supId) await sb.from('suppliers').update(payload).eq('id', supId);
-  else await sb.from('suppliers').insert(payload);
-  closeModal();
-  await loadAppData();
-  renderSuppliers();
-}
-
-// ── MODAL HELPERS ─────────────────────────────────────────────
-function showModal(html) {
-  document.getElementById('modal-container').innerHTML = `
-    <div class="modal-overlay" onclick="closeModalOnOverlay(event)">
-      <div class="modal">${html}</div>
-    </div>`;
-}
-function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
-function closeModalOnOverlay(e) { if (e.target.classList.contains('modal-overlay')) closeModal(); }
-
-// ── TOAST ─────────────────────────────────────────────────────
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;pointer-events:none';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2200);
-}
-</script>
-</body>
-</html>
+      <button class="auth-tab active" onclick="switchAuthTab('login')">Log
