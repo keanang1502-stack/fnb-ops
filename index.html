@@ -7,23 +7,10 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --bg: #F7F8FA;
-    --white: #FFFFFF;
-    --brand: #2D6A4F;
-    --brand-light: #E8F5EE;
-    --brand-dark: #1B4332;
-    --accent: #F4A261;
-    --red: #E63946;
-    --red-light: #FDECEA;
-    --yellow: #F4A261;
-    --yellow-light: #FEF3E8;
-    --green: #2D6A4F;
-    --green-light: #E8F5EE;
-    --text: #1A1A2E;
-    --text-muted: #6B7280;
-    --border: #E5E7EB;
-    --shadow: 0 1px 3px rgba(0,0,0,0.08);
-    --radius: 10px;
+    --bg: #F7F8FA; --white: #FFFFFF; --brand: #2D6A4F; --brand-light: #E8F5EE;
+    --brand-dark: #1B4332; --red: #E63946; --red-light: #FDECEA;
+    --green: #2D6A4F; --green-light: #E8F5EE; --text: #1A1A2E;
+    --text-muted: #6B7280; --border: #E5E7EB; --shadow: 0 1px 3px rgba(0,0,0,0.08); --radius: 10px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
@@ -57,13 +44,12 @@
   .btn-ghost { background: none; color: var(--brand); font-weight: 600; font-size: 14px; padding: 8px 12px; border: none; cursor: pointer; }
   .btn-danger { background: var(--red-light); color: var(--red); }
   .btn-sm { padding: 7px 12px; font-size: 13px; width: auto; }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn:disabled { opacity: 0.6; cursor: not-allowed; }
   .btn-row { display: flex; gap: 8px; margin-top: 16px; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
   .badge-low { background: var(--red-light); color: var(--red); }
   .badge-ok { background: var(--green-light); color: var(--green); }
   .badge-full { background: #EEF2FF; color: #4F46E5; }
-  .badge-critical { background: var(--red); color: #fff; }
   .item-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .item-row:last-child { border-bottom: none; }
   .item-info { flex: 1; min-width: 0; }
@@ -81,12 +67,11 @@
   .supplier-meta { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
   .supplier-actions { display: flex; gap: 8px; margin-top: 10px; }
   .order-group { background: var(--white); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 12px; }
-  .order-group-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-  .order-group-name { font-weight: 700; font-size: 15px; }
+  .order-group-name { font-weight: 700; font-size: 15px; margin-bottom: 6px; }
   .order-item-list { font-size: 14px; color: var(--text-muted); margin-bottom: 10px; }
   .order-item-list li { padding: 4px 0; }
-  .tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; margin-bottom: 16px; }
-  .tab { flex: 1; padding: 8px 4px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border: none; background: none; transition: all 0.15s; }
+  .tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; margin-bottom: 16px; overflow-x: auto; }
+  .tab { flex-shrink: 0; padding: 8px 12px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-muted); border: none; background: none; transition: all 0.15s; }
   .tab.active { background: var(--white); color: var(--brand); box-shadow: var(--shadow); }
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: flex; align-items: flex-end; justify-content: center; }
   .modal { background: var(--white); border-radius: 16px 16px 0 0; padding: 20px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; }
@@ -99,12 +84,12 @@
   .empty-icon { font-size: 40px; margin-bottom: 10px; }
   .alert { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
   .alert-error { background: var(--red-light); color: var(--red); }
-  .alert-success { background: var(--green-light); color: var(--green); }
   .invite-box { background: var(--brand-light); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; }
-  .invite-code { font-family: monospace; font-size: 20px; font-weight: 700; color: var(--brand-dark); letter-spacing: 4px; text-align: center; margin: 8px 0; }
+  .invite-code { font-family: monospace; font-size: 24px; font-weight: 700; color: var(--brand-dark); letter-spacing: 4px; text-align: center; margin: 8px 0; }
   .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  .spinner-dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--brand); }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .loading { display: flex; align-items: center; justify-content: center; padding: 40px; color: var(--text-muted); gap: 10px; }
+  .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-muted); gap: 10px; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -124,12 +109,12 @@
       <label>Password</label>
       <input type="password" id="login-password" placeholder="••••••••"/>
       <div style="margin-top:16px">
-        <button class="btn btn-primary" onclick="doLogin()">Log In</button>
+        <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Log In</button>
       </div>
     </div>
     <div id="signup-form" style="display:none">
       <label>Your name</label>
-      <input type="text" id="signup-name" placeholder="e.g. Sarah"/>
+      <input type="text" id="signup-name" placeholder="e.g. Keana"/>
       <label>Email</label>
       <input type="email" id="signup-email" placeholder="you@example.com"/>
       <label>Password</label>
@@ -152,7 +137,7 @@
         </div>
       </div>
       <div style="margin-top:16px">
-        <button class="btn btn-primary" onclick="doSignup()">Create Account</button>
+        <button class="btn btn-primary" id="signup-btn" onclick="doSignup()">Create Account</button>
       </div>
     </div>
   </div>
@@ -167,7 +152,7 @@
     </div>
   </div>
   <div class="content" id="page-content">
-    <div class="loading"><div class="spinner" style="border-top-color:var(--brand)"></div> Loading…</div>
+    <div class="loading"><div class="spinner spinner-dark"></div> Loading…</div>
   </div>
   <nav class="bottom-nav">
     <button class="nav-item active" onclick="navigate('inventory')" id="nav-inventory">
@@ -201,53 +186,86 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let currentUser = null, currentProfile = null, currentOrg = null, currentPage = 'inventory';
-let appData = { items: [], suppliers: [] };
+let STATE = { user: null, profile: null, org: null, items: [], suppliers: [] };
+
+function showAuthError(msg) { const el = document.getElementById('auth-error'); el.textContent = msg; el.style.display = ''; }
+function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
+function setContent(html) { document.getElementById('page-content').innerHTML = html; }
+function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = ''; }
+function showAuth() { document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; }
+
+window.addEventListener('load', async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    STATE.user = session.user;
+    const ok = await loadProfile();
+    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+    else { showAuth(); }
+  } else { showAuth(); }
+});
+
+async function loadProfile() {
+  try {
+    const { data: profile, error: pe } = await sb.from('profiles').select('id, org_id, full_name, role').eq('id', STATE.user.id).single();
+    if (pe || !profile) { showAuthError('Profile error: ' + (pe?.message||'not found')); return false; }
+    STATE.profile = profile;
+    const { data: org, error: oe } = await sb.from('organisations').select('id, name, invite_code').eq('id', profile.org_id).single();
+    if (oe || !org) { showAuthError('Org error: ' + (oe?.message||'not found')); return false; }
+    STATE.org = org;
+    document.getElementById('org-name-badge').textContent = org.name;
+    return true;
+  } catch(e) { showAuthError('Load error: ' + e.message); return false; }
+}
+
+async function loadData() {
+  if (!STATE.org) return;
+  const [{ data: items }, { data: suppliers }] = await Promise.all([
+    sb.from('items').select('*, suppliers(name)').eq('org_id', STATE.org.id).eq('is_active', true).order('name'),
+    sb.from('suppliers').select('*').eq('org_id', STATE.org.id).order('name')
+  ]);
+  STATE.items = items || [];
+  STATE.suppliers = suppliers || [];
+}
 
 function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0) === (tab==='login')));
-  document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
-  document.getElementById('signup-form').style.display = tab === 'signup' ? '' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0)===(tab==='login')));
+  document.getElementById('login-form').style.display = tab==='login' ? '' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? '' : 'none';
   clearAuthError();
 }
 
 document.querySelectorAll('input[name="signup-role"]').forEach(r => {
   r.addEventListener('change', () => {
-    const isOwner = r.value === 'owner' && r.checked;
-    document.getElementById('new-org-fields').style.display = isOwner ? '' : 'none';
-    document.getElementById('join-org-fields').style.display = isOwner ? 'none' : '';
+    document.getElementById('new-org-fields').style.display = r.value==='owner' && r.checked ? '' : 'none';
+    document.getElementById('join-org-fields').style.display = r.value==='staff' && r.checked ? '' : 'none';
   });
 });
-
-function showAuthError(msg) { const el = document.getElementById('auth-error'); el.textContent = msg; el.style.display = ''; }
-function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
 
 async function doLogin() {
   clearAuthError();
   const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value;
-  if (!email || !password) return showAuthError('Please fill in all fields.');
-  const btn = document.querySelector('#login-form .btn-primary');
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) return showAuthError('Please fill in all fields.');
+  const btn = document.getElementById('login-btn');
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Logging in…';
   try {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
     if (error) { showAuthError('Login failed: ' + error.message); return; }
-    if (!data?.user) { showAuthError('Login failed — please try again.'); return; }
-  } catch(e) {
-    showAuthError('Connection error: ' + e.message);
-  } finally {
-    btn.disabled = false; btn.innerHTML = 'Log In';
-  }
+    STATE.user = data.user;
+    const ok = await loadProfile();
+    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+  } catch(e) { showAuthError('Error: ' + e.message); }
+  finally { btn.disabled = false; btn.innerHTML = 'Log In'; }
 }
 
 async function doSignup() {
   clearAuthError();
   const name = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
+  const pass = document.getElementById('signup-password').value;
   const role = document.querySelector('input[name="signup-role"]:checked').value;
-  if (!name || !email || !password) return showAuthError('Please fill in all fields.');
-  if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+  if (!name || !email || !pass) return showAuthError('Please fill in all fields.');
+  if (pass.length < 6) return showAuthError('Password must be at least 6 characters.');
   let orgName = '', inviteCode = '';
   if (role === 'owner') {
     orgName = document.getElementById('signup-org-name').value.trim();
@@ -256,358 +274,176 @@ async function doSignup() {
     inviteCode = document.getElementById('signup-invite-code').value.trim().toUpperCase();
     if (!inviteCode) return showAuthError('Please enter an invite code.');
   }
-  const btn = document.querySelector('#signup-form .btn-primary');
+  const btn = document.getElementById('signup-btn');
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Creating account…';
   try {
-    const { data, error } = await sb.auth.signUp({ email, password });
+    const { data, error } = await sb.auth.signUp({ email, password: pass });
     if (error) { showAuthError('Signup failed: ' + error.message); return; }
-    if (!data?.user) { showAuthError('Signup failed — make sure Confirm Email is OFF in Supabase > Auth > Providers > Email.'); return; }
-    const userId = data.user.id;
+    if (!data?.user) { showAuthError('Signup failed — turn off Confirm Email in Supabase > Auth > Providers > Email.'); return; }
+    STATE.user = data.user;
     if (role === 'owner') {
-      const { error: orgErr } = await sb.rpc('create_org_for_new_user', { user_id: userId, org_name: orgName, user_full_name: name });
-      if (orgErr) { showAuthError('Cafe setup failed: ' + orgErr.message); return; }
+      const { error: re } = await sb.rpc('create_org_for_new_user', { user_id: STATE.user.id, org_name: orgName, user_full_name: name });
+      if (re) { showAuthError('Cafe setup failed: ' + re.message); return; }
     } else {
-      const { data: org, error: orgErr } = await sb.from('organisations').select('id').eq('invite_code', inviteCode).single();
-      if (orgErr || !org) { showAuthError('Invalid invite code. Ask your owner for the correct code.'); return; }
-      await sb.from('profiles').insert({ id: userId, org_id: org.id, full_name: name, role: 'staff' });
+      const { data: org, error: oe } = await sb.from('organisations').select('id').eq('invite_code', inviteCode).single();
+      if (oe || !org) { showAuthError('Invalid invite code.'); return; }
+      const { error: pe } = await sb.from('profiles').insert({ id: STATE.user.id, org_id: org.id, full_name: name, role: 'staff' });
+      if (pe) { showAuthError('Profile setup failed: ' + pe.message); return; }
     }
-  } catch(e) {
-    showAuthError('Unexpected error: ' + e.message);
-  } finally {
-    btn.disabled = false; btn.innerHTML = 'Create Account';
-  }
+    const ok = await loadProfile();
+    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+  } catch(e) { showAuthError('Unexpected error: ' + e.message); }
+  finally { btn.disabled = false; btn.innerHTML = 'Create Account'; }
 }
 
 async function doLogout() {
   await sb.auth.signOut();
-  document.getElementById('app').style.display = 'none';
-  document.getElementById('auth-screen').style.display = 'flex';
-  currentUser = currentProfile = currentOrg = null;
-}
-
-sb.auth.onAuthStateChange(async (event, session) => {
-  if (event === 'SIGNED_OUT') {
-    document.getElementById('auth-screen').style.display = 'flex';
-    document.getElementById('app').style.display = 'none';
-    return;
-  }
-  if (session?.user && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
-    currentUser = session.user;
-    try {
-      const { data: profile, error } = await sb.from('profiles')
-        .select('*, organisations(*)')
-        .eq('id', currentUser.id)
-        .maybeSingle();
-      if (error) throw error;
-      if (!profile) { showAuthError('Profile not found. Please contact support.'); return; }
-      currentProfile = profile;
-      currentOrg = profile.organisations;
-      document.getElementById('org-name-badge').textContent = currentOrg?.name || 'My Cafe';
-      const [{ data: items }, { data: suppliers }] = await Promise.all([
-        sb.from('items').select('*, suppliers(name)').eq('org_id', currentOrg.id).eq('is_active', true).order('name'),
-        sb.from('suppliers').select('*').eq('org_id', currentOrg.id).order('name')
-      ]);
-      appData.items = items || [];
-      appData.suppliers = suppliers || [];
-      document.getElementById('auth-screen').style.display = 'none';
-      document.getElementById('app').style.display = '';
-      navigate('inventory');
-    } catch(e) {
-      showAuthError('Login failed: ' + e.message);
-    }
-  }
-});
-
-async function loadUserContext() {
-  const { data: profile } = await sb.from('profiles').select('*, organisations(*)').eq('id', currentUser.id).single();
-  if (profile) { currentProfile = profile; currentOrg = profile.organisations; document.getElementById('org-name-badge').textContent = currentOrg?.name || 'My Cafe'; }
-}
-
-async function loadAppData() {
-  const [{ data: items }, { data: suppliers }] = await Promise.all([
-    sb.from('items').select('*, suppliers(name)').eq('org_id', currentOrg.id).eq('is_active', true).order('name'),
-    sb.from('suppliers').select('*').eq('org_id', currentOrg.id).order('name')
-  ]);
-  appData.items = items || []; appData.suppliers = suppliers || [];
+  STATE = { user: null, profile: null, org: null, items: [], suppliers: [] };
+  showAuth();
 }
 
 function navigate(page) {
-  currentPage = page;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`nav-${page}`)?.classList.add('active');
+  document.getElementById('nav-' + page)?.classList.add('active');
   ({ inventory: renderInventory, log: renderLog, orders: renderOrders, suppliers: renderSuppliers, settings: renderSettings })[page]?.();
 }
 
-function setContent(html) { document.getElementById('page-content').innerHTML = html; }
-
 async function renderInventory() {
-  await loadAppData();
-  const { items } = appData;
-  const lowItems = items.filter(i => i.status === 'low' || i.status === 'critical');
-  const categories = [...new Set(items.map(i => i.category).filter(Boolean))].sort();
+  await loadData();
+  const { items } = STATE;
+  const low = items.filter(i => i.status==='low'||i.status==='critical');
+  const cats = [...new Set(items.map(i => i.category).filter(Boolean))].sort();
   let html = '';
-  if (lowItems.length) {
-    html += `<div class="section-header">🔴 Needs Ordering (${lowItems.length})</div><div class="card">`;
-    lowItems.forEach(item => { html += itemRow(item); });
-    html += `</div>`;
-  }
-  html += `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px">
-    <div class="section-header" style="margin:0">All Items</div>
-    <button class="btn-ghost btn-sm" onclick="showAddItemModal()">+ Add Item</button>
-  </div>
-  <div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search items…" oninput="filterItems(this.value)" id="item-search"/></div>`;
-  const tabs = ['All', 'Food', 'Non-Food', ...categories.filter(c => c !== 'Food' && c !== 'Non-Food')];
-  html += `<div class="tabs" style="overflow-x:auto; flex-wrap:nowrap">`;
-  tabs.forEach((t,i) => html += `<button class="tab${i===0?' active':''}" onclick="filterCategory(this,'${t}')">${t}</button>`);
-  html += `</div><div class="card" id="items-list">`;
-  if (!items.length) html += `<div class="empty"><div class="empty-icon">📦</div><div>No items yet. Add your first item!</div></div>`;
-  else items.forEach(item => { html += itemRow(item); });
-  html += `</div>`;
+  if (low.length) { html += `<div class="section-header">🔴 Needs Ordering (${low.length})</div><div class="card">`; low.forEach(i => html += itemRow(i)); html += '</div>'; }
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div class="section-header" style="margin:0">All Items</div><button class="btn-ghost btn-sm" onclick="showAddItemModal()">+ Add Item</button></div>`;
+  html += `<div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search items…" oninput="filterItems(this.value)"/></div>`;
+  const tabs = ['All','Food','Non-Food',...cats.filter(c=>c!=='Food'&&c!=='Non-Food')];
+  html += '<div class="tabs">'+tabs.map((t,i)=>`<button class="tab${i===0?' active':''}" onclick="filterCategory(this,'${t}')">${t}</button>`).join('')+'</div>';
+  html += '<div class="card" id="items-list">';
+  if (!items.length) html += '<div class="empty"><div class="empty-icon">📦</div><div>No items yet. Add your first item!</div></div>';
+  else items.forEach(i => html += itemRow(i));
+  html += '</div>';
   setContent(html);
 }
 
 function itemRow(item) {
-  const statusMap = { low: 'badge-low', ok: 'badge-ok', full: 'badge-full', critical: 'badge-critical' };
-  return `<div class="item-row" data-category="${item.category||''}" data-type="${item.type}">
-    <div class="item-info">
-      <div class="item-name">${item.name}</div>
-      <div class="item-meta">${item.category || ''} ${item.suppliers?.name ? '· ' + item.suppliers.name : ''} ${item.unit ? '· ' + item.unit : ''}</div>
-    </div>
-    <span class="badge ${statusMap[item.status] || 'badge-ok'}">${item.status || 'ok'}</span>
+  const bmap = { low:'badge-low', ok:'badge-ok', full:'badge-full', critical:'badge-low' };
+  return `<div class="item-row" data-cat="${item.category||''}" data-type="${item.type||'food'}">
+    <div class="item-info"><div class="item-name">${item.name}</div><div class="item-meta">${[item.category,item.suppliers?.name,item.unit].filter(Boolean).join(' · ')}</div></div>
+    <span class="badge ${bmap[item.status]||'badge-ok'}">${item.status||'ok'}</span>
     <button class="btn-ghost btn-sm" onclick="showEditItemModal('${item.id}')">Edit</button>
   </div>`;
 }
 
-function filterItems(query) {
-  const q = query.toLowerCase();
-  document.querySelectorAll('.item-row').forEach(row => { row.style.display = row.querySelector('.item-name').textContent.toLowerCase().includes(q) ? '' : 'none'; });
-}
-
-function filterCategory(btn, category) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
-  document.querySelectorAll('.item-row').forEach(row => {
-    const show = category === 'All' || row.dataset.category === category || (category === 'Food' && row.dataset.type === 'food') || (category === 'Non-Food' && row.dataset.type === 'non-food');
-    row.style.display = show ? '' : 'none';
-  });
+function filterItems(q) { q=q.toLowerCase(); document.querySelectorAll('.item-row').forEach(r=>r.style.display=r.querySelector('.item-name').textContent.toLowerCase().includes(q)?'':'none'); }
+function filterCategory(btn,cat) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.item-row').forEach(r=>{ const show=cat==='All'||r.dataset.cat===cat||(cat==='Food'&&r.dataset.type==='food')||(cat==='Non-Food'&&r.dataset.type==='non-food'); r.style.display=show?'':'none'; });
 }
 
 function renderLog() {
-  const { items } = appData;
-  let html = `<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>
-    <p style="font-size:13px; color:var(--text-muted); margin-bottom:14px">Quick tap — is each item low, okay, or full?</p>`;
-  if (!items.length) html += `<div class="empty"><div class="empty-icon">📋</div><div>No items yet. Add items in Inventory first.</div></div>`;
+  const { items } = STATE;
+  let html = `<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div><p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Quick tap — is each item low, okay, or full?</p>`;
+  if (!items.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items yet.</div></div>';
   else {
-    items.forEach(item => {
-      html += `<div class="item-row">
-        <div class="item-info"><div class="item-name">${item.name}</div><div class="item-meta">${item.category || ''}</div></div>
-        <div class="status-row">
-          <button class="status-btn low ${item.status==='low'?'selected':''}" onclick="setStatus(this,'${item.id}','low')">🔴 Low</button>
-          <button class="status-btn ok ${item.status==='ok'||!item.status?'selected':''}" onclick="setStatus(this,'${item.id}','ok')">🟡 OK</button>
-          <button class="status-btn full ${item.status==='full'?'selected':''}" onclick="setStatus(this,'${item.id}','full')">🟢 Full</button>
-        </div>
-      </div>`;
-    });
-    html += `<div class="btn-row"><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>`;
+    items.forEach(item => { html += `<div class="item-row"><div class="item-info"><div class="item-name">${item.name}</div><div class="item-meta">${item.category||''}</div></div><div class="status-row"><button class="status-btn low ${item.status==='low'?'selected':''}" onclick="setSt(this,'${item.id}','low')">🔴 Low</button><button class="status-btn ok ${!item.status||item.status==='ok'?'selected':''}" onclick="setSt(this,'${item.id}','ok')">🟡 OK</button><button class="status-btn full ${item.status==='full'?'selected':''}" onclick="setSt(this,'${item.id}','full')">🟢 Full</button></div></div>`; });
+    html += '<div class="btn-row"><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
   }
-  html += `</div>`;
-  setContent(html);
+  html += '</div>'; setContent(html);
 }
 
-let pendingStatuses = {};
-
-function setStatus(btn, itemId, status) {
-  btn.closest('.item-row').querySelectorAll('.status-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  pendingStatuses[itemId] = status;
-}
-
+let pendingSt = {};
+function setSt(btn,id,status) { btn.closest('.item-row').querySelectorAll('.status-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); pendingSt[id]=status; }
 async function submitLog() {
-  const statuses = { ...pendingStatuses };
-  appData.items.forEach(item => { if (!statuses[item.id]) statuses[item.id] = item.status || 'ok'; });
-  await Promise.all(Object.entries(statuses).map(([id, status]) => sb.from('items').update({ status }).eq('id', id).eq('org_id', currentOrg.id)));
-  await sb.from('stock_logs').insert(Object.entries(statuses).map(([item_id, status]) => ({ org_id: currentOrg.id, item_id, logged_by: currentUser.id, log_type: 'status_check', status })));
-  pendingStatuses = {};
-  showToast('Status check saved! ✅');
-  await loadAppData(); renderLog();
+  const st={...pendingSt}; STATE.items.forEach(i=>{if(!st[i.id])st[i.id]=i.status||'ok';});
+  await Promise.all(Object.entries(st).map(([id,status])=>sb.from('items').update({status}).eq('id',id)));
+  await sb.from('stock_logs').insert(Object.entries(st).map(([item_id,status])=>({org_id:STATE.org.id,item_id,logged_by:STATE.user.id,log_type:'status_check',status})));
+  pendingSt={}; showToast('Saved! ✅'); await loadData(); renderLog();
 }
 
 async function renderOrders() {
-  await loadAppData();
-  const lowItems = appData.items.filter(i => i.status === 'low' || i.status === 'critical');
-  const bySupplier = {};
-  lowItems.forEach(item => {
-    const suppId = item.supplier_id || '__unknown__';
-    if (!bySupplier[suppId]) bySupplier[suppId] = { supplier: appData.suppliers.find(s => s.id === suppId), items: [] };
-    bySupplier[suppId].items.push(item);
+  await loadData();
+  const low=STATE.items.filter(i=>i.status==='low'||i.status==='critical');
+  const bySup={};
+  low.forEach(item=>{const sid=item.supplier_id||'__none__';if(!bySup[sid])bySup[sid]={sup:STATE.suppliers.find(s=>s.id===sid),items:[]};bySup[sid].items.push(item);});
+  let html='<div class="section-header">Order Queue</div>';
+  if(!low.length) html+='<div class="card"><div class="empty"><div class="empty-icon">✅</div><div>Nothing to order!</div></div></div>';
+  else Object.entries(bySup).forEach(([sid,g])=>{
+    const sup=g.sup; const today=new Date().toLocaleDateString('en-SG',{weekday:'long'});
+    html+=`<div class="order-group"><div class="order-group-name">${sup?.name||'Unknown Supplier'}</div>${sup?.no_delivery_days?.includes(today)?`<div style="font-size:12px;color:var(--red)">⚠️ No delivery today</div>`:''}${sup?.moq?`<div style="font-size:12px;color:var(--text-muted)">MOQ: ${sup.moq}</div>`:''}<ul class="order-item-list" style="margin-top:8px">${g.items.map(i=>`<li>• ${i.name}${i.reorder_qty?' — '+i.reorder_qty+' '+(i.unit||''):''}</li>`).join('')}</ul><div class="btn-row">${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}<button class="btn btn-secondary btn-sm" onclick="showMsg('${sid}')">📋 Message</button></div></div>`;
   });
-  let html = `<div class="section-header">Order Queue</div>`;
-  if (!lowItems.length) {
-    html += `<div class="card"><div class="empty"><div class="empty-icon">✅</div><div>Nothing to order — all items are OK or Full!</div></div></div>`;
-  } else {
-    Object.entries(bySupplier).forEach(([suppId, group]) => {
-      const sup = group.supplier;
-      const today = new Date().toLocaleDateString('en-SG', { weekday: 'long' });
-      const noDelivery = sup?.no_delivery_days?.includes(today);
-      html += `<div class="order-group">
-        <div class="order-group-header"><div>
-          <div class="order-group-name">${sup?.name || 'Unknown Supplier'}</div>
-          ${noDelivery ? `<div style="font-size:12px; color:var(--red)">⚠️ No delivery today (${today})</div>` : ''}
-          ${sup?.moq ? `<div style="font-size:12px; color:var(--text-muted)">MOQ: ${sup.moq}</div>` : ''}
-        </div></div>
-        <ul class="order-item-list">${group.items.map(i => `<li>• ${i.name}${i.reorder_qty ? ' — ' + i.reorder_qty + ' ' + (i.unit||'') : ''}</li>`).join('')}</ul>
-        <div class="btn-row">
-          ${sup?.whatsapp_link ? `<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none">💬 Open WhatsApp</a>` : ''}
-          <button class="btn btn-secondary btn-sm" onclick="showOrderMessage('${suppId}')">📋 View Message</button>
-        </div>
-      </div>`;
-    });
-  }
-  const { data: pastOrders } = await sb.from('orders').select('*, suppliers(name)').eq('org_id', currentOrg.id).order('created_at', { ascending: false }).limit(10);
-  if (pastOrders?.length) {
-    html += `<div class="section-header">Recent Orders</div><div class="card">`;
-    pastOrders.forEach(o => { html += `<div class="item-row"><div class="item-info"><div class="item-name">${o.suppliers?.name || 'Unknown'}</div><div class="item-meta">${new Date(o.created_at).toLocaleDateString('en-SG')} · ${o.status}</div></div><span class="badge ${o.status==='sent'?'badge-ok':'badge-full'}">${o.status}</span></div>`; });
-    html += `</div>`;
-  }
+  const {data:past}=await sb.from('orders').select('*,suppliers(name)').eq('org_id',STATE.org.id).order('created_at',{ascending:false}).limit(5);
+  if(past?.length){html+='<div class="section-header">Recent Orders</div><div class="card">'; past.forEach(o=>html+=`<div class="item-row"><div class="item-info"><div class="item-name">${o.suppliers?.name||'Unknown'}</div><div class="item-meta">${new Date(o.created_at).toLocaleDateString('en-SG')}</div></div><span class="badge badge-ok">${o.status}</span></div>`); html+='</div>';}
   setContent(html);
 }
 
-async function showOrderMessage(suppId) {
-  const group = appData.items.filter(i => (i.supplier_id || '__unknown__') === suppId && (i.status === 'low' || i.status === 'critical'));
-  const sup = appData.suppliers.find(s => s.id === suppId);
-  const itemList = group.map(i => `- ${i.name}${i.reorder_qty ? ': ' + i.reorder_qty + ' ' + (i.unit||'') : ''}`).join('\n');
-  const today = new Date().toLocaleDateString('en-SG', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-  const msg = sup?.message_template ? sup.message_template.replace('{items}', itemList).replace('{date}', today) : `Hi! Ordering for ${currentOrg.name}:\n\n${itemList}\n\nPlease deliver ASAP. Thank you!`;
-  showModal(`<div class="modal-title">Order Message — ${sup?.name || 'Supplier'}<button class="modal-close" onclick="closeModal()">×</button></div>
-    <textarea id="order-msg-text" style="min-height:160px; font-family:monospace; font-size:13px">${msg}</textarea>
-    <div class="btn-row" style="margin-top:12px">
-      <button class="btn btn-secondary" onclick="copyOrderMsg()">📋 Copy</button>
-      ${sup?.whatsapp_link ? `<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 Open WhatsApp</a>` : ''}
-    </div>
-    <div class="btn-row"><button class="btn btn-secondary" onclick="markOrderSent('${suppId}')">✅ Mark as Sent</button></div>`);
+async function showMsg(sid) {
+  const items=STATE.items.filter(i=>(i.supplier_id||'__none__')===sid&&(i.status==='low'||i.status==='critical'));
+  const sup=STATE.suppliers.find(s=>s.id===sid);
+  const list=items.map(i=>`- ${i.name}${i.reorder_qty?': '+i.reorder_qty+' '+(i.unit||''):''}`).join('\n');
+  const msg=sup?.message_template?sup.message_template.replace('{items}',list):`Hi! Ordering for ${STATE.org.name}:\n\n${list}\n\nThank you!`;
+  showModal(`<div class="modal-title">Order Message<button class="modal-close" onclick="closeModal()">×</button></div><textarea id="omsg" style="min-height:140px;font-family:monospace;font-size:13px">${msg}</textarea><div class="btn-row"><button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('omsg').value).then(()=>showToast('Copied!'))">📋 Copy</button>${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 WhatsApp</a>`:''}</div><div class="btn-row"><button class="btn btn-secondary" onclick="markSent('${sid}')">✅ Mark Sent</button></div>`);
 }
 
-function copyOrderMsg() { navigator.clipboard.writeText(document.getElementById('order-msg-text').value).then(() => showToast('Copied! ✅')); }
-
-async function markOrderSent(suppId) {
-  const items = appData.items.filter(i => (i.supplier_id||'__unknown__') === suppId && (i.status==='low'||i.status==='critical'));
-  const msg = document.getElementById('order-msg-text')?.value || '';
-  const { data: order } = await sb.from('orders').insert({ org_id: currentOrg.id, supplier_id: suppId === '__unknown__' ? null : suppId, created_by: currentUser.id, status: 'sent', message_text: msg, ordered_at: new Date() }).select().single();
-  if (order && items.length) await sb.from('order_items').insert(items.map(i => ({ order_id: order.id, item_id: i.id, quantity: i.reorder_qty || 1, unit: i.unit })));
-  closeModal(); showToast('Order marked as sent ✅');
-  await loadAppData(); renderOrders();
+async function markSent(sid) {
+  const items=STATE.items.filter(i=>(i.supplier_id||'__none__')===sid&&(i.status==='low'||i.status==='critical'));
+  const msg=document.getElementById('omsg')?.value||'';
+  const {data:order}=await sb.from('orders').insert({org_id:STATE.org.id,supplier_id:sid==='__none__'?null:sid,created_by:STATE.user.id,status:'sent',message_text:msg,ordered_at:new Date()}).select().single();
+  if(order) await sb.from('order_items').insert(items.map(i=>({order_id:order.id,item_id:i.id,quantity:i.reorder_qty||1,unit:i.unit})));
+  closeModal(); showToast('Order marked sent ✅'); await loadData(); renderOrders();
 }
 
 function renderSuppliers() {
-  const { suppliers } = appData;
-  let html = `<div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
-    <div class="section-header" style="margin:0">Suppliers (${suppliers.length})</div>
-    <button class="btn-ghost btn-sm" onclick="showAddSupplierModal()">+ Add Supplier</button>
-  </div>`;
-  if (!suppliers.length) html += `<div class="card"><div class="empty"><div class="empty-icon">🤝</div><div>No suppliers yet. Add your first one!</div></div></div>`;
-  else suppliers.forEach(sup => {
-    html += `<div class="supplier-card">
-      <div class="supplier-name">${sup.name}</div>
-      <div class="supplier-meta">${sup.contact_name ? sup.contact_name + ' · ' : ''}${sup.channel || ''}<br/>MOQ: ${sup.moq || '—'} · Lead time: ${sup.lead_time_days || 1}d · No delivery: ${sup.no_delivery_days?.join(', ') || '—'}</div>
-      <div class="supplier-actions">
-        ${sup.whatsapp_link ? `<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">💬 WhatsApp</a>` : ''}
-        <button class="btn btn-secondary btn-sm" onclick="showEditSupplierModal('${sup.id}')">Edit</button>
-      </div>
-    </div>`;
-  });
+  const {suppliers}=STATE;
+  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="section-header" style="margin:0">Suppliers (${suppliers.length})</div><button class="btn-ghost btn-sm" onclick="showSupplierModal(null)">+ Add</button></div>`;
+  if(!suppliers.length) html+='<div class="card"><div class="empty"><div class="empty-icon">🤝</div><div>No suppliers yet.</div></div></div>';
+  else suppliers.forEach(s=>{html+=`<div class="supplier-card"><div class="supplier-name">${s.name}</div><div class="supplier-meta">${s.contact_name||''} ${s.channel?'· '+s.channel:''}<br>MOQ: ${s.moq||'—'} · No delivery: ${s.no_delivery_days?.join(', ')||'—'}</div><div class="supplier-actions">${s.whatsapp_link?`<a href="${s.whatsapp_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}<button class="btn btn-secondary btn-sm" onclick="showSupplierModal('${s.id}')">Edit</button></div></div>`;});
   setContent(html);
 }
 
-async function renderSettings() {
-  const code = currentOrg?.id?.slice(0,6).toUpperCase() || '——';
-  setContent(`<div class="card"><div class="card-title">☕ ${currentOrg?.name}</div>
-    <div style="font-size:14px; color:var(--text-muted)">Owner: ${currentProfile?.full_name}</div>
-    <div style="font-size:14px; color:var(--text-muted)">${currentUser?.email}</div></div>
-    <div class="card"><div class="card-title">👥 Invite Staff</div>
-    <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px">Share this code with your staff so they can join your cafe on the app.</p>
-    <div class="invite-box"><div style="font-size:13px; color:var(--brand); font-weight:600">Invite Code</div>
-    <div class="invite-code">${code}</div>
-    <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Copied!'))">Copy Code</button></div></div>
-    <div class="card"><div class="card-title">⚙️ Account</div><button class="btn btn-danger" onclick="doLogout()">Log Out</button></div>`);
+function renderSettings() {
+  const code=STATE.org?.invite_code||STATE.org?.id?.slice(0,6).toUpperCase()||'——';
+  setContent(`<div class="card"><div class="card-title">☕ ${STATE.org?.name}</div><div style="font-size:14px;color:var(--text-muted)">${STATE.profile?.full_name} · ${STATE.profile?.role}</div><div style="font-size:14px;color:var(--text-muted)">${STATE.user?.email}</div></div><div class="card"><div class="card-title">👥 Invite Staff</div><p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Share this code + the app URL with your staff.</p><div class="invite-box"><div style="font-size:12px;color:var(--brand);font-weight:600">Your Invite Code</div><div class="invite-code">${code}</div><button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Copied!'))">Copy</button></div></div><div class="card"><div class="card-title">⚙️ Account</div><button class="btn btn-danger" onclick="doLogout()">Log Out</button></div>`);
 }
 
 function showAddItemModal() {
-  const opts = appData.suppliers.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-  showModal(`<div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div>
-    <label>Item Name</label><input id="m-name" placeholder="e.g. Oat Milk"/>
-    <label>Category</label><input id="m-category" placeholder="e.g. Dairy, Coffee, Bakery"/>
-    <label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select>
-    <label>Unit</label><input id="m-unit" placeholder="e.g. litres, packs, kg"/>
-    <label>Supplier</label><select id="m-supplier"><option value="">— No supplier —</option>${opts}</select>
-    <label>Reorder Quantity</label><input id="m-reorder-qty" type="number" placeholder="e.g. 2"/>
-    <label>Initial Status</label><select id="m-status"><option value="ok">OK</option><option value="low">Low</option><option value="full">Full</option></select>
-    <div class="btn-row"><button class="btn btn-primary" onclick="saveItem()">Add Item</button></div>`);
+  const opts=STATE.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  showModal(`<div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div><label>Name</label><input id="m-name" placeholder="e.g. Oat Milk"/><label>Category</label><input id="m-cat" placeholder="e.g. Dairy"/><label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select><label>Unit</label><input id="m-unit" placeholder="e.g. litres"/><label>Supplier</label><select id="m-sup"><option value="">— None —</option>${opts}</select><label>Reorder Qty</label><input id="m-qty" type="number" placeholder="e.g. 2"/><label>Status</label><select id="m-st"><option value="ok">OK</option><option value="low">Low</option><option value="full">Full</option></select><div class="btn-row"><button class="btn btn-primary" onclick="saveItem()">Add Item</button></div>`);
 }
 
-function showEditItemModal(itemId) {
-  const item = appData.items.find(i => i.id === itemId); if (!item) return;
-  const opts = appData.suppliers.map(s => `<option value="${s.id}" ${s.id===item.supplier_id?'selected':''}>${s.name}</option>`).join('');
-  showModal(`<div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div>
-    <label>Item Name</label><input id="m-name" value="${item.name}"/>
-    <label>Category</label><input id="m-category" value="${item.category||''}"/>
-    <label>Type</label><select id="m-type"><option value="food" ${item.type==='food'?'selected':''}>Food</option><option value="non-food" ${item.type==='non-food'?'selected':''}>Non-Food</option></select>
-    <label>Unit</label><input id="m-unit" value="${item.unit||''}"/>
-    <label>Supplier</label><select id="m-supplier"><option value="">— No supplier —</option>${opts}</select>
-    <label>Reorder Quantity</label><input id="m-reorder-qty" type="number" value="${item.reorder_qty||''}"/>
-    <label>Status</label><select id="m-status"><option value="ok" ${item.status==='ok'?'selected':''}>OK</option><option value="low" ${item.status==='low'?'selected':''}>Low</option><option value="full" ${item.status==='full'?'selected':''}>Full</option></select>
-    <div class="btn-row"><button class="btn btn-primary" onclick="saveItem('${itemId}')">Save</button><button class="btn btn-danger" onclick="archiveItem('${itemId}')">Remove</button></div>`);
+function showEditItemModal(id) {
+  const item=STATE.items.find(i=>i.id===id); if(!item) return;
+  const opts=STATE.suppliers.map(s=>`<option value="${s.id}" ${s.id===item.supplier_id?'selected':''}>${s.name}</option>`).join('');
+  showModal(`<div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div><label>Name</label><input id="m-name" value="${item.name}"/><label>Category</label><input id="m-cat" value="${item.category||''}"/><label>Type</label><select id="m-type"><option value="food" ${item.type==='food'?'selected':''}>Food</option><option value="non-food" ${item.type==='non-food'?'selected':''}>Non-Food</option></select><label>Unit</label><input id="m-unit" value="${item.unit||''}"/><label>Supplier</label><select id="m-sup"><option value="">— None —</option>${opts}</select><label>Reorder Qty</label><input id="m-qty" type="number" value="${item.reorder_qty||''}"/><label>Status</label><select id="m-st"><option value="ok" ${item.status==='ok'?'selected':''}>OK</option><option value="low" ${item.status==='low'?'selected':''}>Low</option><option value="full" ${item.status==='full'?'selected':''}>Full</option></select><div class="btn-row"><button class="btn btn-primary" onclick="saveItem('${id}')">Save</button><button class="btn btn-danger" onclick="removeItem('${id}')">Remove</button></div>`);
 }
 
-async function saveItem(itemId) {
-  const payload = { org_id: currentOrg.id, name: document.getElementById('m-name').value.trim(), category: document.getElementById('m-category').value.trim(), type: document.getElementById('m-type').value, unit: document.getElementById('m-unit').value.trim(), supplier_id: document.getElementById('m-supplier').value || null, reorder_qty: parseFloat(document.getElementById('m-reorder-qty').value) || 0, status: document.getElementById('m-status').value };
-  if (!payload.name) return showToast('Please enter an item name');
-  if (itemId) await sb.from('items').update(payload).eq('id', itemId);
-  else await sb.from('items').insert(payload);
-  closeModal(); await loadAppData(); renderInventory();
+async function saveItem(id) {
+  const p={org_id:STATE.org.id,name:document.getElementById('m-name').value.trim(),category:document.getElementById('m-cat').value.trim(),type:document.getElementById('m-type').value,unit:document.getElementById('m-unit').value.trim(),supplier_id:document.getElementById('m-sup').value||null,reorder_qty:parseFloat(document.getElementById('m-qty').value)||0,status:document.getElementById('m-st').value};
+  if(!p.name) return showToast('Please enter a name');
+  if(id) await sb.from('items').update(p).eq('id',id); else await sb.from('items').insert(p);
+  closeModal(); await loadData(); renderInventory();
+}
+async function removeItem(id) { await sb.from('items').update({is_active:false}).eq('id',id); closeModal(); await loadData(); renderInventory(); }
+
+function showSupplierModal(id) {
+  const s=id?STATE.suppliers.find(x=>x.id===id):null;
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const noDel=s?.no_delivery_days||[];
+  const checks=days.map(d=>`<label style="display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer"><input type="checkbox" value="${d}" ${noDel.includes(d)?'checked':''} style="width:auto"/> ${d}</label>`).join('');
+  showModal(`<div class="modal-title">${s?'Edit':'Add'} Supplier <button class="modal-close" onclick="closeModal()">×</button></div><label>Name</label><input id="s-name" value="${s?.name||''}"/><label>Contact</label><input id="s-contact" value="${s?.contact_name||''}" placeholder="e.g. David"/><label>Channel</label><select id="s-ch"><option value="whatsapp" ${s?.channel==='whatsapp'?'selected':''}>WhatsApp</option><option value="email" ${s?.channel==='email'?'selected':''}>Email</option></select><label>WhatsApp Link</label><input id="s-wa" value="${s?.whatsapp_link||''}" placeholder="https://chat.whatsapp.com/..."/><label>MOQ</label><input id="s-moq" value="${s?.moq||''}" placeholder="e.g. $30 min"/><label>Lead Time (days)</label><input id="s-lead" type="number" value="${s?.lead_time_days||1}"/><label>No Delivery Days</label>${checks}<label>Message Template</label><textarea id="s-tmpl" placeholder="Hi! Order:\n{items}\nThanks!">${s?.message_template||''}</textarea><div class="btn-row"><button class="btn btn-primary" onclick="saveSupplier('${s?.id||''}')">Save</button></div>`);
 }
 
-async function archiveItem(itemId) {
-  await sb.from('items').update({ is_active: false }).eq('id', itemId);
-  closeModal(); await loadAppData(); renderInventory();
+async function saveSupplier(id) {
+  const noDel=[...document.querySelectorAll('#modal-container input[type=checkbox]:checked')].map(c=>c.value);
+  const p={org_id:STATE.org.id,name:document.getElementById('s-name').value.trim(),contact_name:document.getElementById('s-contact').value.trim(),channel:document.getElementById('s-ch').value,whatsapp_link:document.getElementById('s-wa').value.trim(),moq:document.getElementById('s-moq').value.trim(),lead_time_days:parseInt(document.getElementById('s-lead').value)||1,no_delivery_days:noDel,message_template:document.getElementById('s-tmpl').value.trim()};
+  if(!p.name) return showToast('Please enter a supplier name');
+  if(id) await sb.from('suppliers').update(p).eq('id',id); else await sb.from('suppliers').insert(p);
+  closeModal(); await loadData(); renderSuppliers();
 }
 
-function showAddSupplierModal() { showSupplierModal(null); }
-function showEditSupplierModal(id) { showSupplierModal(appData.suppliers.find(s => s.id === id)); }
-
-function showSupplierModal(sup) {
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const noDel = sup?.no_delivery_days || [];
-  const dayChecks = days.map(d => `<label style="display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer"><input type="checkbox" value="${d}" ${noDel.includes(d)?'checked':''} style="width:auto"/> ${d}</label>`).join('');
-  showModal(`<div class="modal-title">${sup ? 'Edit' : 'Add'} Supplier <button class="modal-close" onclick="closeModal()">×</button></div>
-    <label>Supplier Name</label><input id="s-name" value="${sup?.name||''}"/>
-    <label>Contact Name</label><input id="s-contact" value="${sup?.contact_name||''}" placeholder="e.g. David"/>
-    <label>Channel</label><select id="s-channel"><option value="whatsapp" ${sup?.channel==='whatsapp'?'selected':''}>WhatsApp</option><option value="email" ${sup?.channel==='email'?'selected':''}>Email</option><option value="phone" ${sup?.channel==='phone'?'selected':''}>Phone</option></select>
-    <label>WhatsApp Group Link</label><input id="s-wa" value="${sup?.whatsapp_link||''}" placeholder="https://chat.whatsapp.com/... or wa.me/65..."/>
-    <label>Email</label><input id="s-email" value="${sup?.email||''}" placeholder="supplier@example.com"/>
-    <label>MOQ</label><input id="s-moq" value="${sup?.moq||''}" placeholder="e.g. $30 minimum"/>
-    <label>Lead Time (days)</label><input id="s-lead" type="number" value="${sup?.lead_time_days||1}"/>
-    <label>No Delivery Days</label>${dayChecks}
-    <label>Order Message Template</label><textarea id="s-template" placeholder="Hi! Ordering for cafe:\n{items}\nThank you!">${sup?.message_template||''}</textarea>
-    <div class="btn-row"><button class="btn btn-primary" onclick="saveSupplier('${sup?.id||''}')">Save</button></div>`);
-}
-
-async function saveSupplier(supId) {
-  const noDel = [...document.querySelectorAll('#modal-container input[type=checkbox]:checked')].map(c => c.value);
-  const payload = { org_id: currentOrg.id, name: document.getElementById('s-name').value.trim(), contact_name: document.getElementById('s-contact').value.trim(), channel: document.getElementById('s-channel').value, whatsapp_link: document.getElementById('s-wa').value.trim(), email: document.getElementById('s-email').value.trim(), moq: document.getElementById('s-moq').value.trim(), lead_time_days: parseInt(document.getElementById('s-lead').value) || 1, no_delivery_days: noDel, message_template: document.getElementById('s-template').value.trim() };
-  if (!payload.name) return showToast('Please enter a supplier name');
-  if (supId) await sb.from('suppliers').update(payload).eq('id', supId);
-  else await sb.from('suppliers').insert(payload);
-  closeModal(); await loadAppData(); renderSuppliers();
-}
-
-function showModal(html) { document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="closeModalOnOverlay(event)"><div class="modal">${html}</div></div>`; }
-function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
-function closeModalOnOverlay(e) { if (e.target.classList.contains('modal-overlay')) closeModal(); }
-
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;pointer-events:none';
-  t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200);
-}
+function showModal(html) { document.getElementById('modal-container').innerHTML=`<div class="modal-overlay" onclick="if(event.target.classList.contains('modal-overlay'))closeModal()"><div class="modal">${html}</div></div>`; }
+function closeModal() { document.getElementById('modal-container').innerHTML=''; }
+function showToast(msg) { const t=document.createElement('div'); t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
 </script>
 </body>
 </html>
