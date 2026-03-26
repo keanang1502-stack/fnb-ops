@@ -191,7 +191,7 @@ let STATE = { user: null, profile: null, org: null, items: [], suppliers: [] };
 function showAuthError(msg) { const el = document.getElementById('auth-error'); el.textContent = msg; el.style.display = ''; }
 function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
 function setContent(html) { document.getElementById('page-content').innerHTML = html; }
-function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = ''; }
+function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = 'block'; }
 function showAuth() { document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; }
 
 window.addEventListener('load', async () => {
