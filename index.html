@@ -207,16 +207,18 @@ window.addEventListener('load', async () => {
 async function loadProfile() {
   try {
     const { data: profile, error: pe } = await sb.from('profiles').select('id, org_id, full_name, role').eq('id', STATE.user.id).single();
-    if (pe || !profile) { showAuthError('Profile error: ' + (pe?.message||'not found')); return false; }
+    if (pe) { showAuthError('Profile DB error: ' + pe.message + ' | code: ' + pe.code); return false; }
+    if (!profile) { showAuthError('No profile found for user: ' + STATE.user.id); return false; }
     STATE.profile = profile;
     const { data: org, error: oe } = await sb.from('organisations').select('id, name, invite_code').eq('id', profile.org_id).single();
-    if (oe || !org) { showAuthError('Org error: ' + (oe?.message||'not found')); return false; }
+    if (oe) { showAuthError('Org DB error: ' + oe.message + ' | code: ' + oe.code); return false; }
+    if (!org) { showAuthError('No org found for id: ' + profile.org_id); return false; }
     STATE.org = org;
     document.getElementById('org-name-badge').textContent = org.name;
     return true;
-  } catch(e) { showAuthError('Load error: ' + e.message); return false; }
+  } catch(e) { showAuthError('Caught error: ' + e.message + ' | ' + e.stack); return false; }
 }
-
+  
 async function loadData() {
   if (!STATE.org) return;
   const [{ data: items }, { data: suppliers }] = await Promise.all([
