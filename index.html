@@ -21,7 +21,7 @@
   .auth-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
   .auth-tab { flex: 1; padding: 8px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-muted); transition: all 0.15s; border: none; background: none; }
   .auth-tab.active { background: var(--white); color: var(--brand); box-shadow: var(--shadow); }
-  #app { display: none; min-height: 100vh; }
+  #app { display: none; min-height: 100vh; background: var(--bg); }
   .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .topbar-title { font-weight: 700; font-size: 17px; color: var(--brand-dark); }
   .topbar-right { display: flex; align-items: center; gap: 12px; }
@@ -191,7 +191,7 @@ let STATE = { user: null, profile: null, org: null, items: [], suppliers: [] };
 function showAuthError(msg) { const el = document.getElementById('auth-error'); el.textContent = msg; el.style.display = ''; }
 function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
 function setContent(html) { document.getElementById('page-content').innerHTML = html; }
-function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = ''; }
+function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = 'block'; } document.getElementById('app').style.display = ''; }
 function showAuth() { document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; }
 
 window.addEventListener('load', async () => {
