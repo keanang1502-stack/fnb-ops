@@ -21,7 +21,7 @@
   .auth-tabs { display: flex; gap: 4px; background: var(--bg); border-radius: 8px; padding: 4px; margin-bottom: 24px; }
   .auth-tab { flex: 1; padding: 8px; text-align: center; border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 500; color: var(--text-muted); transition: all 0.15s; border: none; background: none; }
   .auth-tab.active { background: var(--white); color: var(--brand); box-shadow: var(--shadow); }
-  #app { display: none; min-height: 100vh; background: var(--bg); }
+  #app { display: none; min-height: 100vh; }
   .topbar { background: var(--white); border-bottom: 1px solid var(--border); padding: 0 16px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
   .topbar-title { font-weight: 700; font-size: 17px; color: var(--brand-dark); }
   .topbar-right { display: flex; align-items: center; gap: 12px; }
@@ -90,6 +90,7 @@
   .spinner-dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--brand); }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading { display: flex; align-items: center; justify-content: center; padding: 60px; color: var(--text-muted); gap: 10px; font-size: 15px; }
+  .debug-box { background: #f0f0f0; border-radius: 8px; padding: 10px; font-size: 12px; font-family: monospace; margin-bottom: 12px; color: #333; word-break: break-all; }
 </style>
 </head>
 <body>
@@ -103,6 +104,7 @@
       <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
     </div>
     <div id="auth-error" class="alert alert-error" style="display:none"></div>
+
     <div id="login-form">
       <label>Email</label>
       <input type="email" id="login-email" placeholder="you@example.com"/>
@@ -112,6 +114,7 @@
         <button class="btn btn-primary" id="login-btn" onclick="doLogin()">Log In</button>
       </div>
     </div>
+
     <div id="signup-form" style="display:none">
       <label>Your name</label>
       <input type="text" id="signup-name" placeholder="e.g. Keana"/>
@@ -188,40 +191,58 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let STATE = { user: null, profile: null, org: null, items: [], suppliers: [] };
 
-function showAuthError(msg) { const el = document.getElementById('auth-error'); el.textContent = msg; el.style.display = ''; }
+// ── HELPERS ──────────────────────────────────────────────────
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = '';
+}
 function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
 function setContent(html) { document.getElementById('page-content').innerHTML = html; }
-function showApp() { document.getElementById('auth-screen').style.display = 'none'; document.getElementById('app').style.display = 'block'; }
-function showAuth() { document.getElementById('app').style.display = 'none'; document.getElementById('auth-screen').style.display = 'flex'; }
+function showApp() {
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app').style.display = '';
+}
+function showAuth() {
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
 
+// ── BOOT: check existing session on page load ────────────────
 window.addEventListener('load', async () => {
-  try {
-    const { data: { session }, error: se } = await sb.auth.getSession();
-    if (se) { showAuthError('Session error: ' + se.message); showAuth(); return; }
-    if (session?.user) {
-      STATE.user = session.user;
-      const ok = await loadProfile();
-      if (ok) { showApp(); await loadData(); navigate('inventory'); }
-      else { showAuth(); }
-    } else { showAuth(); }
-  } catch(e) { showAuthError('Boot error: ' + e.message); showAuth(); }
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    STATE.user = session.user;
+    const ok = await loadProfile();
+    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+    else { showAuth(); }
+  } else {
+    showAuth();
+  }
 });
 
 async function loadProfile() {
   try {
-    const { data: profile, error: pe } = await sb.from('profiles').select('id, org_id, full_name, role').eq('id', STATE.user.id).single();
-    if (pe) { showAuthError('Profile DB error: ' + pe.message + ' | code: ' + pe.code); return false; }
-    if (!profile) { showAuthError('No profile found for user: ' + STATE.user.id); return false; }
-    STATE.profile = profile;
-    const { data: org, error: oe } = await sb.from('organisations').select('id, name, invite_code').eq('id', profile.org_id).single();
-    if (oe) { showAuthError('Org DB error: ' + oe.message + ' | code: ' + oe.code); return false; }
-    if (!org) { showAuthError('No org found for id: ' + profile.org_id); return false; }
+    const { data, error } = await sb.from('profiles')
+      .select('id, org_id, full_name, role')
+      .eq('id', STATE.user.id)
+      .single();
+    if (error || !data) { showAuthError('Could not load profile: ' + (error?.message || 'not found')); return false; }
+    STATE.profile = data;
+
+    const { data: org, error: orgErr } = await sb.from('organisations')
+      .select('id, name, invite_code')
+      .eq('id', data.org_id)
+      .single();
+    if (orgErr || !org) { showAuthError('Could not load org: ' + (orgErr?.message || 'not found')); return false; }
     STATE.org = org;
     document.getElementById('org-name-badge').textContent = org.name;
     return true;
-  } catch(e) { showAuthError('Caught error: ' + e.message + ' | ' + e.stack); return false; }
+  } catch(e) {
+    showAuthError('Load error: ' + e.message);
+    return false;
+  }
 }
-  
+
 async function loadData() {
   if (!STATE.org) return;
   const [{ data: items }, { data: suppliers }] = await Promise.all([
@@ -232,6 +253,7 @@ async function loadData() {
   STATE.suppliers = suppliers || [];
 }
 
+// ── AUTH ─────────────────────────────────────────────────────
 function switchAuthTab(tab) {
   document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0)===(tab==='login')));
   document.getElementById('login-form').style.display = tab==='login' ? '' : 'none';
@@ -259,8 +281,11 @@ async function doLogin() {
     STATE.user = data.user;
     const ok = await loadProfile();
     if (ok) { showApp(); await loadData(); navigate('inventory'); }
-  } catch(e) { showAuthError('Error: ' + e.message); }
-  finally { btn.disabled = false; btn.innerHTML = 'Log In'; }
+  } catch(e) {
+    showAuthError('Error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = 'Log In';
+  }
 }
 
 async function doSignup() {
@@ -271,6 +296,7 @@ async function doSignup() {
   const role = document.querySelector('input[name="signup-role"]:checked').value;
   if (!name || !email || !pass) return showAuthError('Please fill in all fields.');
   if (pass.length < 6) return showAuthError('Password must be at least 6 characters.');
+
   let orgName = '', inviteCode = '';
   if (role === 'owner') {
     orgName = document.getElementById('signup-org-name').value.trim();
@@ -279,26 +305,33 @@ async function doSignup() {
     inviteCode = document.getElementById('signup-invite-code').value.trim().toUpperCase();
     if (!inviteCode) return showAuthError('Please enter an invite code.');
   }
+
   const btn = document.getElementById('signup-btn');
   btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Creating account…';
   try {
     const { data, error } = await sb.auth.signUp({ email, password: pass });
     if (error) { showAuthError('Signup failed: ' + error.message); return; }
-    if (!data?.user) { showAuthError('Signup failed — turn off Confirm Email in Supabase > Auth > Providers > Email.'); return; }
+    if (!data?.user) { showAuthError('Signup failed — please turn off Confirm Email in Supabase > Auth > Providers > Email.'); return; }
+
     STATE.user = data.user;
+
     if (role === 'owner') {
-      const { error: re } = await sb.rpc('create_org_for_new_user', { user_id: STATE.user.id, org_name: orgName, user_full_name: name });
-      if (re) { showAuthError('Cafe setup failed: ' + re.message); return; }
+      const { error: rpcErr } = await sb.rpc('create_org_for_new_user', { user_id: STATE.user.id, org_name: orgName, user_full_name: name });
+      if (rpcErr) { showAuthError('Cafe setup failed: ' + rpcErr.message); return; }
     } else {
-      const { data: org, error: oe } = await sb.from('organisations').select('id').eq('invite_code', inviteCode).single();
-      if (oe || !org) { showAuthError('Invalid invite code.'); return; }
-      const { error: pe } = await sb.from('profiles').insert({ id: STATE.user.id, org_id: org.id, full_name: name, role: 'staff' });
-      if (pe) { showAuthError('Profile setup failed: ' + pe.message); return; }
+      const { data: org, error: orgErr } = await sb.from('organisations').select('id').eq('invite_code', inviteCode).single();
+      if (orgErr || !org) { showAuthError('Invalid invite code.'); return; }
+      const { error: profErr } = await sb.from('profiles').insert({ id: STATE.user.id, org_id: org.id, full_name: name, role: 'staff' });
+      if (profErr) { showAuthError('Profile setup failed: ' + profErr.message); return; }
     }
+
     const ok = await loadProfile();
     if (ok) { showApp(); await loadData(); navigate('inventory'); }
-  } catch(e) { showAuthError('Unexpected error: ' + e.message); }
-  finally { btn.disabled = false; btn.innerHTML = 'Create Account'; }
+  } catch(e) {
+    showAuthError('Unexpected error: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = 'Create Account';
+  }
 }
 
 async function doLogout() {
@@ -307,23 +340,32 @@ async function doLogout() {
   showAuth();
 }
 
+// ── NAVIGATION ───────────────────────────────────────────────
 function navigate(page) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + page)?.classList.add('active');
   ({ inventory: renderInventory, log: renderLog, orders: renderOrders, suppliers: renderSuppliers, settings: renderSettings })[page]?.();
 }
 
+// ── INVENTORY ────────────────────────────────────────────────
 async function renderInventory() {
   await loadData();
   const { items } = STATE;
-  const low = items.filter(i => i.status==='low'||i.status==='critical');
+  const low = items.filter(i => i.status === 'low' || i.status === 'critical');
   const cats = [...new Set(items.map(i => i.category).filter(Boolean))].sort();
   let html = '';
-  if (low.length) { html += `<div class="section-header">🔴 Needs Ordering (${low.length})</div><div class="card">`; low.forEach(i => html += itemRow(i)); html += '</div>'; }
-  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"><div class="section-header" style="margin:0">All Items</div><button class="btn-ghost btn-sm" onclick="showAddItemModal()">+ Add Item</button></div>`;
-  html += `<div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search items…" oninput="filterItems(this.value)"/></div>`;
-  const tabs = ['All','Food','Non-Food',...cats.filter(c=>c!=='Food'&&c!=='Non-Food')];
-  html += '<div class="tabs">'+tabs.map((t,i)=>`<button class="tab${i===0?' active':''}" onclick="filterCategory(this,'${t}')">${t}</button>`).join('')+'</div>';
+  if (low.length) {
+    html += `<div class="section-header">🔴 Needs Ordering (${low.length})</div><div class="card">`;
+    low.forEach(i => html += itemRow(i));
+    html += '</div>';
+  }
+  html += `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+    <div class="section-header" style="margin:0">All Items</div>
+    <button class="btn-ghost btn-sm" onclick="showAddItemModal()">+ Add Item</button>
+  </div>
+  <div class="search-bar"><span class="search-icon">🔍</span><input type="text" placeholder="Search items…" oninput="filterItems(this.value)"/></div>`;
+  const tabs = ['All', 'Food', 'Non-Food', ...cats.filter(c => c !== 'Food' && c !== 'Non-Food')];
+  html += '<div class="tabs">' + tabs.map((t,i) => `<button class="tab${i===0?' active':''}" onclick="filterCategory(this,'${t}')">${t}</button>`).join('') + '</div>';
   html += '<div class="card" id="items-list">';
   if (!items.length) html += '<div class="empty"><div class="empty-icon">📦</div><div>No items yet. Add your first item!</div></div>';
   else items.forEach(i => html += itemRow(i));
@@ -331,124 +373,282 @@ async function renderInventory() {
   setContent(html);
 }
 
+function getThresholdLabels(item) {
+  const u = item.unit ? ' ' + item.unit : '';
+  const lo = item.low_threshold;
+  const hi = item.high_threshold;
+  if (lo != null && hi != null) return { low: '🔴 < '+lo+u, ok: '🟡 '+lo+'–'+hi+u, full: '🟢 > '+hi+u };
+  if (lo != null) return { low: '🔴 < '+lo+u, ok: '🟡 OK', full: '🟢 Full' };
+  return { low: '🔴 Low', ok: '🟡 OK', full: '🟢 Full' };
+}
+
 function itemRow(item) {
-  const bmap = { low:'badge-low', ok:'badge-ok', full:'badge-full', critical:'badge-low' };
-  return `<div class="item-row" data-cat="${item.category||''}" data-type="${item.type||'food'}">
-    <div class="item-info"><div class="item-name">${item.name}</div><div class="item-meta">${[item.category,item.suppliers?.name,item.unit].filter(Boolean).join(' · ')}</div></div>
-    <span class="badge ${bmap[item.status]||'badge-ok'}">${item.status||'ok'}</span>
-    <button class="btn-ghost btn-sm" onclick="showEditItemModal('${item.id}')">Edit</button>
-  </div>`;
+  const bmap = { low: 'badge-low', ok: 'badge-ok', full: 'badge-full', critical: 'badge-low' };
+  const labels = getThresholdLabels(item);
+  const statusLabel = item.status==='low' ? labels.low : item.status==='full' ? labels.full : labels.ok;
+  const hint = item.low_threshold != null ? 'reorder < '+item.low_threshold+(item.unit?' '+item.unit:'') : '';
+  return '<div class="item-row" data-cat="'+(item.category||'')+'" data-type="'+(item.type||'food')+'">' +
+    '<div class="item-info">' +
+    '<div class="item-name">'+item.name+'</div>' +
+    '<div class="item-meta">'+[item.category, item.suppliers?.name, hint].filter(Boolean).join(' · ')+'</div>' +
+    '</div>' +
+    '<span class="badge '+(bmap[item.status]||'badge-ok')+'">'+statusLabel+'</span>' +
+    '<button class="btn-ghost btn-sm" onclick="showEditItemModal(''+item.id+'')">Edit</button>' +
+    '</div>';
 }
 
-function filterItems(q) { q=q.toLowerCase(); document.querySelectorAll('.item-row').forEach(r=>r.style.display=r.querySelector('.item-name').textContent.toLowerCase().includes(q)?'':'none'); }
-function filterCategory(btn,cat) {
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); btn.classList.add('active');
-  document.querySelectorAll('.item-row').forEach(r=>{ const show=cat==='All'||r.dataset.cat===cat||(cat==='Food'&&r.dataset.type==='food')||(cat==='Non-Food'&&r.dataset.type==='non-food'); r.style.display=show?'':'none'; });
+function filterItems(q) {
+  q = q.toLowerCase();
+  document.querySelectorAll('.item-row').forEach(r => r.style.display = r.querySelector('.item-name').textContent.toLowerCase().includes(q) ? '' : 'none');
+}
+function filterCategory(btn, cat) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
+  document.querySelectorAll('.item-row').forEach(r => {
+    const show = cat==='All' || r.dataset.cat===cat || (cat==='Food'&&r.dataset.type==='food') || (cat==='Non-Food'&&r.dataset.type==='non-food');
+    r.style.display = show ? '' : 'none';
+  });
 }
 
+// ── LOG ──────────────────────────────────────────────────────
 function renderLog() {
   const { items } = STATE;
-  let html = `<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div><p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Quick tap — is each item low, okay, or full?</p>`;
+  let html = '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Tap what you see on the shelf for each item.</p>';
   if (!items.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items yet.</div></div>';
   else {
-    items.forEach(item => { html += `<div class="item-row"><div class="item-info"><div class="item-name">${item.name}</div><div class="item-meta">${item.category||''}</div></div><div class="status-row"><button class="status-btn low ${item.status==='low'?'selected':''}" onclick="setSt(this,'${item.id}','low')">🔴 Low</button><button class="status-btn ok ${!item.status||item.status==='ok'?'selected':''}" onclick="setSt(this,'${item.id}','ok')">🟡 OK</button><button class="status-btn full ${item.status==='full'?'selected':''}" onclick="setSt(this,'${item.id}','full')">🟢 Full</button></div></div>`; });
+    items.forEach(item => {
+      const labels = getThresholdLabels(item);
+      html += '<div class="item-row">' +
+        '<div class="item-info">' +
+        '<div class="item-name">'+item.name+'</div>' +
+        '<div class="item-meta">'+(item.category||'')+(item.unit?' · '+item.unit:'')+'</div>' +
+        '</div>' +
+        '<div class="status-row">' +
+        '<button class="status-btn low '+(item.status==='low'?'selected':'')+'" onclick="setSt(this,''+item.id+'','low')">'+labels.low+'</button>' +
+        '<button class="status-btn ok '+(!item.status||item.status==='ok'?'selected':'')+'" onclick="setSt(this,''+item.id+'','ok')">'+labels.ok+'</button>' +
+        '<button class="status-btn full '+(item.status==='full'?'selected':'')+'" onclick="setSt(this,''+item.id+'','full')">'+labels.full+'</button>' +
+        '</div></div>';
+    });
     html += '<div class="btn-row"><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
   }
-  html += '</div>'; setContent(html);
+  html += '</div>';
+  setContent(html);
 }
 
 let pendingSt = {};
-function setSt(btn,id,status) { btn.closest('.item-row').querySelectorAll('.status-btn').forEach(b=>b.classList.remove('selected')); btn.classList.add('selected'); pendingSt[id]=status; }
+function setSt(btn, id, status) {
+  btn.closest('.item-row').querySelectorAll('.status-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected'); pendingSt[id] = status;
+}
 async function submitLog() {
-  const st={...pendingSt}; STATE.items.forEach(i=>{if(!st[i.id])st[i.id]=i.status||'ok';});
-  await Promise.all(Object.entries(st).map(([id,status])=>sb.from('items').update({status}).eq('id',id)));
-  await sb.from('stock_logs').insert(Object.entries(st).map(([item_id,status])=>({org_id:STATE.org.id,item_id,logged_by:STATE.user.id,log_type:'status_check',status})));
-  pendingSt={}; showToast('Saved! ✅'); await loadData(); renderLog();
+  const st = { ...pendingSt };
+  STATE.items.forEach(i => { if (!st[i.id]) st[i.id] = i.status || 'ok'; });
+  await Promise.all(Object.entries(st).map(([id, status]) => sb.from('items').update({ status }).eq('id', id)));
+  await sb.from('stock_logs').insert(Object.entries(st).map(([item_id, status]) => ({ org_id: STATE.org.id, item_id, logged_by: STATE.user.id, log_type: 'status_check', status })));
+  pendingSt = {}; showToast('Saved! ✅'); await loadData(); renderLog();
 }
 
+// ── ORDERS ───────────────────────────────────────────────────
 async function renderOrders() {
   await loadData();
-  const low=STATE.items.filter(i=>i.status==='low'||i.status==='critical');
-  const bySup={};
-  low.forEach(item=>{const sid=item.supplier_id||'__none__';if(!bySup[sid])bySup[sid]={sup:STATE.suppliers.find(s=>s.id===sid),items:[]};bySup[sid].items.push(item);});
-  let html='<div class="section-header">Order Queue</div>';
-  if(!low.length) html+='<div class="card"><div class="empty"><div class="empty-icon">✅</div><div>Nothing to order!</div></div></div>';
-  else Object.entries(bySup).forEach(([sid,g])=>{
-    const sup=g.sup; const today=new Date().toLocaleDateString('en-SG',{weekday:'long'});
-    html+=`<div class="order-group"><div class="order-group-name">${sup?.name||'Unknown Supplier'}</div>${sup?.no_delivery_days?.includes(today)?`<div style="font-size:12px;color:var(--red)">⚠️ No delivery today</div>`:''}${sup?.moq?`<div style="font-size:12px;color:var(--text-muted)">MOQ: ${sup.moq}</div>`:''}<ul class="order-item-list" style="margin-top:8px">${g.items.map(i=>`<li>• ${i.name}${i.reorder_qty?' — '+i.reorder_qty+' '+(i.unit||''):''}</li>`).join('')}</ul><div class="btn-row">${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}<button class="btn btn-secondary btn-sm" onclick="showMsg('${sid}')">📋 Message</button></div></div>`;
+  const low = STATE.items.filter(i => i.status==='low'||i.status==='critical');
+  const bySup = {};
+  low.forEach(item => {
+    const sid = item.supplier_id || '__none__';
+    if (!bySup[sid]) bySup[sid] = { sup: STATE.suppliers.find(s => s.id===sid), items: [] };
+    bySup[sid].items.push(item);
   });
-  const {data:past}=await sb.from('orders').select('*,suppliers(name)').eq('org_id',STATE.org.id).order('created_at',{ascending:false}).limit(5);
-  if(past?.length){html+='<div class="section-header">Recent Orders</div><div class="card">'; past.forEach(o=>html+=`<div class="item-row"><div class="item-info"><div class="item-name">${o.suppliers?.name||'Unknown'}</div><div class="item-meta">${new Date(o.created_at).toLocaleDateString('en-SG')}</div></div><span class="badge badge-ok">${o.status}</span></div>`); html+='</div>';}
+  let html = '<div class="section-header">Order Queue</div>';
+  if (!low.length) html += '<div class="card"><div class="empty"><div class="empty-icon">✅</div><div>Nothing to order!</div></div></div>';
+  else Object.entries(bySup).forEach(([sid, g]) => {
+    const sup = g.sup;
+    const today = new Date().toLocaleDateString('en-SG', { weekday: 'long' });
+    html += `<div class="order-group">
+      <div class="order-group-name">${sup?.name||'Unknown Supplier'}</div>
+      ${sup?.no_delivery_days?.includes(today) ? `<div style="font-size:12px;color:var(--red)">⚠️ No delivery today (${today})</div>` : ''}
+      ${sup?.moq ? `<div style="font-size:12px;color:var(--text-muted)">MOQ: ${sup.moq}</div>` : ''}
+      <ul class="order-item-list" style="margin-top:8px">${g.items.map(i=>`<li>• ${i.name}${i.reorder_qty?' — '+i.reorder_qty+' '+(i.unit||''):''}</li>`).join('')}</ul>
+      <div class="btn-row">
+        ${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="showMsg('${sid}')">📋 Message</button>
+      </div>
+    </div>`;
+  });
+  const { data: past } = await sb.from('orders').select('*, suppliers(name)').eq('org_id', STATE.org.id).order('created_at', { ascending: false }).limit(5);
+  if (past?.length) {
+    html += '<div class="section-header">Recent Orders</div><div class="card">';
+    past.forEach(o => html += `<div class="item-row"><div class="item-info"><div class="item-name">${o.suppliers?.name||'Unknown'}</div><div class="item-meta">${new Date(o.created_at).toLocaleDateString('en-SG')}</div></div><span class="badge badge-ok">${o.status}</span></div>`);
+    html += '</div>';
+  }
   setContent(html);
 }
 
 async function showMsg(sid) {
-  const items=STATE.items.filter(i=>(i.supplier_id||'__none__')===sid&&(i.status==='low'||i.status==='critical'));
-  const sup=STATE.suppliers.find(s=>s.id===sid);
-  const list=items.map(i=>`- ${i.name}${i.reorder_qty?': '+i.reorder_qty+' '+(i.unit||''):''}`).join('\n');
-  const msg=sup?.message_template?sup.message_template.replace('{items}',list):`Hi! Ordering for ${STATE.org.name}:\n\n${list}\n\nThank you!`;
-  showModal(`<div class="modal-title">Order Message<button class="modal-close" onclick="closeModal()">×</button></div><textarea id="omsg" style="min-height:140px;font-family:monospace;font-size:13px">${msg}</textarea><div class="btn-row"><button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('omsg').value).then(()=>showToast('Copied!'))">📋 Copy</button>${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 WhatsApp</a>`:''}</div><div class="btn-row"><button class="btn btn-secondary" onclick="markSent('${sid}')">✅ Mark Sent</button></div>`);
+  const items = STATE.items.filter(i => (i.supplier_id||'__none__')===sid && (i.status==='low'||i.status==='critical'));
+  const sup = STATE.suppliers.find(s => s.id===sid);
+  const list = items.map(i => `- ${i.name}${i.reorder_qty?': '+i.reorder_qty+' '+(i.unit||''):''}`).join('\n');
+  const msg = sup?.message_template ? sup.message_template.replace('{items}',list) : `Hi! Ordering for ${STATE.org.name}:\n\n${list}\n\nThank you!`;
+  showModal(`<div class="modal-title">Order Message<button class="modal-close" onclick="closeModal()">×</button></div>
+    <textarea id="omsg" style="min-height:140px;font-family:monospace;font-size:13px">${msg}</textarea>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('omsg').value).then(()=>showToast('Copied!'))">📋 Copy</button>
+      ${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 WhatsApp</a>`:''}
+    </div>
+    <div class="btn-row"><button class="btn btn-secondary" onclick="markSent('${sid}')">✅ Mark Sent</button></div>`);
 }
 
 async function markSent(sid) {
-  const items=STATE.items.filter(i=>(i.supplier_id||'__none__')===sid&&(i.status==='low'||i.status==='critical'));
-  const msg=document.getElementById('omsg')?.value||'';
-  const {data:order}=await sb.from('orders').insert({org_id:STATE.org.id,supplier_id:sid==='__none__'?null:sid,created_by:STATE.user.id,status:'sent',message_text:msg,ordered_at:new Date()}).select().single();
-  if(order) await sb.from('order_items').insert(items.map(i=>({order_id:order.id,item_id:i.id,quantity:i.reorder_qty||1,unit:i.unit})));
+  const items = STATE.items.filter(i => (i.supplier_id||'__none__')===sid && (i.status==='low'||i.status==='critical'));
+  const msg = document.getElementById('omsg')?.value||'';
+  const { data: order } = await sb.from('orders').insert({ org_id: STATE.org.id, supplier_id: sid==='__none__'?null:sid, created_by: STATE.user.id, status: 'sent', message_text: msg, ordered_at: new Date() }).select().single();
+  if (order) await sb.from('order_items').insert(items.map(i => ({ order_id: order.id, item_id: i.id, quantity: i.reorder_qty||1, unit: i.unit })));
   closeModal(); showToast('Order marked sent ✅'); await loadData(); renderOrders();
 }
 
+// ── SUPPLIERS ────────────────────────────────────────────────
 function renderSuppliers() {
-  const {suppliers}=STATE;
-  let html=`<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div class="section-header" style="margin:0">Suppliers (${suppliers.length})</div><button class="btn-ghost btn-sm" onclick="showSupplierModal(null)">+ Add</button></div>`;
-  if(!suppliers.length) html+='<div class="card"><div class="empty"><div class="empty-icon">🤝</div><div>No suppliers yet.</div></div></div>';
-  else suppliers.forEach(s=>{html+=`<div class="supplier-card"><div class="supplier-name">${s.name}</div><div class="supplier-meta">${s.contact_name||''} ${s.channel?'· '+s.channel:''}<br>MOQ: ${s.moq||'—'} · No delivery: ${s.no_delivery_days?.join(', ')||'—'}</div><div class="supplier-actions">${s.whatsapp_link?`<a href="${s.whatsapp_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}<button class="btn btn-secondary btn-sm" onclick="showSupplierModal('${s.id}')">Edit</button></div></div>`;});
+  const { suppliers } = STATE;
+  let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <div class="section-header" style="margin:0">Suppliers (${suppliers.length})</div>
+    <button class="btn-ghost btn-sm" onclick="showSupplierModal(null)">+ Add</button>
+  </div>`;
+  if (!suppliers.length) html += '<div class="card"><div class="empty"><div class="empty-icon">🤝</div><div>No suppliers yet.</div></div></div>';
+  else suppliers.forEach(s => {
+    html += `<div class="supplier-card">
+      <div class="supplier-name">${s.name}</div>
+      <div class="supplier-meta">${s.contact_name||''} ${s.channel?'· '+s.channel:''}<br>MOQ: ${s.moq||'—'} · No delivery: ${s.no_delivery_days?.join(', ')||'—'}</div>
+      <div class="supplier-actions">
+        ${s.whatsapp_link?`<a href="${s.whatsapp_link}" target="_blank" class="btn btn-secondary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="showSupplierModal('${s.id}')">Edit</button>
+      </div>
+    </div>`;
+  });
   setContent(html);
 }
 
+// ── SETTINGS ─────────────────────────────────────────────────
 function renderSettings() {
-  const code=STATE.org?.invite_code||STATE.org?.id?.slice(0,6).toUpperCase()||'——';
-  setContent(`<div class="card"><div class="card-title">☕ ${STATE.org?.name}</div><div style="font-size:14px;color:var(--text-muted)">${STATE.profile?.full_name} · ${STATE.profile?.role}</div><div style="font-size:14px;color:var(--text-muted)">${STATE.user?.email}</div></div><div class="card"><div class="card-title">👥 Invite Staff</div><p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Share this code + the app URL with your staff.</p><div class="invite-box"><div style="font-size:12px;color:var(--brand);font-weight:600">Your Invite Code</div><div class="invite-code">${code}</div><button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Copied!'))">Copy</button></div></div><div class="card"><div class="card-title">⚙️ Account</div><button class="btn btn-danger" onclick="doLogout()">Log Out</button></div>`);
+  const code = STATE.org?.invite_code || STATE.org?.id?.slice(0,6).toUpperCase() || '——';
+  setContent(`
+    <div class="card"><div class="card-title">☕ ${STATE.org?.name}</div>
+      <div style="font-size:14px;color:var(--text-muted)">${STATE.profile?.full_name} · ${STATE.profile?.role}</div>
+      <div style="font-size:14px;color:var(--text-muted)">${STATE.user?.email}</div>
+    </div>
+    <div class="card"><div class="card-title">👥 Invite Staff</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:10px">Share this code + the app URL with your staff.</p>
+      <div class="invite-box">
+        <div style="font-size:12px;color:var(--brand);font-weight:600">Your Invite Code</div>
+        <div class="invite-code">${code}</div>
+        <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Copied!'))">Copy</button>
+      </div>
+    </div>
+    <div class="card"><div class="card-title">⚙️ Account</div>
+      <button class="btn btn-danger" onclick="doLogout()">Log Out</button>
+    </div>`);
 }
 
+// ── ITEM MODALS ───────────────────────────────────────────────
 function showAddItemModal() {
-  const opts=STATE.suppliers.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  showModal(`<div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div><label>Name</label><input id="m-name" placeholder="e.g. Oat Milk"/><label>Category</label><input id="m-cat" placeholder="e.g. Dairy"/><label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select><label>Unit</label><input id="m-unit" placeholder="e.g. litres"/><label>Supplier</label><select id="m-sup"><option value="">— None —</option>${opts}</select><label>Reorder Qty</label><input id="m-qty" type="number" placeholder="e.g. 2"/><label>Status</label><select id="m-st"><option value="ok">OK</option><option value="low">Low</option><option value="full">Full</option></select><div class="btn-row"><button class="btn btn-primary" onclick="saveItem()">Add Item</button></div>`);
+  const opts = STATE.suppliers.map(s => '<option value="'+s.id+'">'+s.name+'</option>').join('');
+  showModal('<div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div>' +
+    '<label>Name</label><input id="m-name" placeholder="e.g. Oat Milk"/>' +
+    '<label>Category</label><input id="m-cat" placeholder="e.g. Dairy"/>' +
+    '<label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select>' +
+    '<label>Unit</label><input id="m-unit" placeholder="e.g. cartons, bags, kg"/>' +
+    '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
+    '<label>Reorder Qty (how much to order)</label><input id="m-qty" type="number" placeholder="e.g. 10"/>' +
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
+    '<div style="font-weight:600;font-size:13px;margin-bottom:6px">📊 Stock Thresholds</div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Set the numbers that define each button label for staff.</div>' +
+    '<label>🔴 Low — below this number</label><input id="m-low" type="number" placeholder="e.g. 3"/>' +
+    '<label>🟢 Full — above this number</label><input id="m-high" type="number" placeholder="e.g. 10"/>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">🟡 OK = between Low and Full</div>' +
+    '</div>' +
+    '<div class="btn-row"><button class="btn btn-primary" onclick="saveItem()">Add Item</button></div>');
 }
 
 function showEditItemModal(id) {
-  const item=STATE.items.find(i=>i.id===id); if(!item) return;
-  const opts=STATE.suppliers.map(s=>`<option value="${s.id}" ${s.id===item.supplier_id?'selected':''}>${s.name}</option>`).join('');
-  showModal(`<div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div><label>Name</label><input id="m-name" value="${item.name}"/><label>Category</label><input id="m-cat" value="${item.category||''}"/><label>Type</label><select id="m-type"><option value="food" ${item.type==='food'?'selected':''}>Food</option><option value="non-food" ${item.type==='non-food'?'selected':''}>Non-Food</option></select><label>Unit</label><input id="m-unit" value="${item.unit||''}"/><label>Supplier</label><select id="m-sup"><option value="">— None —</option>${opts}</select><label>Reorder Qty</label><input id="m-qty" type="number" value="${item.reorder_qty||''}"/><label>Status</label><select id="m-st"><option value="ok" ${item.status==='ok'?'selected':''}>OK</option><option value="low" ${item.status==='low'?'selected':''}>Low</option><option value="full" ${item.status==='full'?'selected':''}>Full</option></select><div class="btn-row"><button class="btn btn-primary" onclick="saveItem('${id}')">Save</button><button class="btn btn-danger" onclick="removeItem('${id}')">Remove</button></div>`);
+  const item = STATE.items.find(i => i.id===id); if (!item) return;
+  const opts = STATE.suppliers.map(s => '<option value="'+s.id+'" '+(s.id===item.supplier_id?'selected':'')+'>'+s.name+'</option>').join('');
+  showModal('<div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div>' +
+    '<label>Name</label><input id="m-name" value="'+item.name+'"/>' +
+    '<label>Category</label><input id="m-cat" value="'+(item.category||'')+'"/>' +
+    '<label>Type</label><select id="m-type"><option value="food" '+(item.type==='food'?'selected':'')+'>Food</option><option value="non-food" '+(item.type==='non-food'?'selected':'')+'>Non-Food</option></select>' +
+    '<label>Unit</label><input id="m-unit" value="'+(item.unit||'')+'"/>' +
+    '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
+    '<label>Reorder Qty (how much to order)</label><input id="m-qty" type="number" value="'+(item.reorder_qty||'')+'"/>' +
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
+    '<div style="font-weight:600;font-size:13px;margin-bottom:6px">📊 Stock Thresholds</div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Change these to update what the buttons show staff.</div>' +
+    '<label>🔴 Low — below this number</label><input id="m-low" type="number" value="'+(item.low_threshold!=null?item.low_threshold:'')+'"/>' +
+    '<label>🟢 Full — above this number</label><input id="m-high" type="number" value="'+(item.high_threshold!=null?item.high_threshold:'')+'"/>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">🟡 OK = between Low and Full</div>' +
+    '</div>' +
+    '<div class="btn-row">' +
+    '<button class="btn btn-primary" onclick="saveItem(''+id+'')">Save</button>' +
+    '<button class="btn btn-danger" onclick="removeItem(''+id+'')">Remove</button>' +
+    '</div>');
 }
 
 async function saveItem(id) {
-  const p={org_id:STATE.org.id,name:document.getElementById('m-name').value.trim(),category:document.getElementById('m-cat').value.trim(),type:document.getElementById('m-type').value,unit:document.getElementById('m-unit').value.trim(),supplier_id:document.getElementById('m-sup').value||null,reorder_qty:parseFloat(document.getElementById('m-qty').value)||0,status:document.getElementById('m-st').value};
-  if(!p.name) return showToast('Please enter a name');
-  if(id) await sb.from('items').update(p).eq('id',id); else await sb.from('items').insert(p);
+  const lowVal = parseFloat(document.getElementById('m-low').value);
+  const highVal = parseFloat(document.getElementById('m-high').value);
+  const p = {
+    org_id: STATE.org.id,
+    name: document.getElementById('m-name').value.trim(),
+    category: document.getElementById('m-cat').value.trim(),
+    type: document.getElementById('m-type').value,
+    unit: document.getElementById('m-unit').value.trim(),
+    supplier_id: document.getElementById('m-sup').value || null,
+    reorder_qty: parseFloat(document.getElementById('m-qty').value) || 0,
+    low_threshold: isNaN(lowVal) ? null : lowVal,
+    high_threshold: isNaN(highVal) ? null : highVal,
+  };
+  if (!p.name) return showToast('Please enter a name');
+  if (id) await sb.from('items').update(p).eq('id', id);
+  else await sb.from('items').insert(p);
   closeModal(); await loadData(); renderInventory();
 }
-async function removeItem(id) { await sb.from('items').update({is_active:false}).eq('id',id); closeModal(); await loadData(); renderInventory(); }
+async function removeItem(id) {
+  await sb.from('items').update({ is_active: false }).eq('id', id);
+  closeModal(); await loadData(); renderInventory();
+}
 
+// ── SUPPLIER MODAL ───────────────────────────────────────────
 function showSupplierModal(id) {
-  const s=id?STATE.suppliers.find(x=>x.id===id):null;
-  const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-  const noDel=s?.no_delivery_days||[];
-  const checks=days.map(d=>`<label style="display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer"><input type="checkbox" value="${d}" ${noDel.includes(d)?'checked':''} style="width:auto"/> ${d}</label>`).join('');
-  showModal(`<div class="modal-title">${s?'Edit':'Add'} Supplier <button class="modal-close" onclick="closeModal()">×</button></div><label>Name</label><input id="s-name" value="${s?.name||''}"/><label>Contact</label><input id="s-contact" value="${s?.contact_name||''}" placeholder="e.g. David"/><label>Channel</label><select id="s-ch"><option value="whatsapp" ${s?.channel==='whatsapp'?'selected':''}>WhatsApp</option><option value="email" ${s?.channel==='email'?'selected':''}>Email</option></select><label>WhatsApp Link</label><input id="s-wa" value="${s?.whatsapp_link||''}" placeholder="https://chat.whatsapp.com/..."/><label>MOQ</label><input id="s-moq" value="${s?.moq||''}" placeholder="e.g. $30 min"/><label>Lead Time (days)</label><input id="s-lead" type="number" value="${s?.lead_time_days||1}"/><label>No Delivery Days</label>${checks}<label>Message Template</label><textarea id="s-tmpl" placeholder="Hi! Order:\n{items}\nThanks!">${s?.message_template||''}</textarea><div class="btn-row"><button class="btn btn-primary" onclick="saveSupplier('${s?.id||''}')">Save</button></div>`);
+  const s = id ? STATE.suppliers.find(x => x.id===id) : null;
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+  const noDel = s?.no_delivery_days||[];
+  const checks = days.map(d => `<label style="display:flex;align-items:center;gap:6px;margin-top:4px;cursor:pointer"><input type="checkbox" value="${d}" ${noDel.includes(d)?'checked':''} style="width:auto"/> ${d}</label>`).join('');
+  showModal(`<div class="modal-title">${s?'Edit':'Add'} Supplier <button class="modal-close" onclick="closeModal()">×</button></div>
+    <label>Name</label><input id="s-name" value="${s?.name||''}"/>
+    <label>Contact</label><input id="s-contact" value="${s?.contact_name||''}" placeholder="e.g. David"/>
+    <label>Channel</label><select id="s-ch"><option value="whatsapp" ${s?.channel==='whatsapp'?'selected':''}>WhatsApp</option><option value="email" ${s?.channel==='email'?'selected':''}>Email</option></select>
+    <label>WhatsApp Link</label><input id="s-wa" value="${s?.whatsapp_link||''}" placeholder="https://chat.whatsapp.com/..."/>
+    <label>MOQ</label><input id="s-moq" value="${s?.moq||''}" placeholder="e.g. $30 min"/>
+    <label>Lead Time (days)</label><input id="s-lead" type="number" value="${s?.lead_time_days||1}"/>
+    <label>No Delivery Days</label>${checks}
+    <label>Message Template</label><textarea id="s-tmpl" placeholder="Hi! Order:\n{items}\nThanks!">${s?.message_template||''}</textarea>
+    <div class="btn-row"><button class="btn btn-primary" onclick="saveSupplier('${s?.id||''}')">Save</button></div>`);
 }
 
 async function saveSupplier(id) {
-  const noDel=[...document.querySelectorAll('#modal-container input[type=checkbox]:checked')].map(c=>c.value);
-  const p={org_id:STATE.org.id,name:document.getElementById('s-name').value.trim(),contact_name:document.getElementById('s-contact').value.trim(),channel:document.getElementById('s-ch').value,whatsapp_link:document.getElementById('s-wa').value.trim(),moq:document.getElementById('s-moq').value.trim(),lead_time_days:parseInt(document.getElementById('s-lead').value)||1,no_delivery_days:noDel,message_template:document.getElementById('s-tmpl').value.trim()};
-  if(!p.name) return showToast('Please enter a supplier name');
-  if(id) await sb.from('suppliers').update(p).eq('id',id); else await sb.from('suppliers').insert(p);
+  const noDel = [...document.querySelectorAll('#modal-container input[type=checkbox]:checked')].map(c => c.value);
+  const p = { org_id: STATE.org.id, name: document.getElementById('s-name').value.trim(), contact_name: document.getElementById('s-contact').value.trim(), channel: document.getElementById('s-ch').value, whatsapp_link: document.getElementById('s-wa').value.trim(), moq: document.getElementById('s-moq').value.trim(), lead_time_days: parseInt(document.getElementById('s-lead').value)||1, no_delivery_days: noDel, message_template: document.getElementById('s-tmpl').value.trim() };
+  if (!p.name) return showToast('Please enter a supplier name');
+  if (id) await sb.from('suppliers').update(p).eq('id', id);
+  else await sb.from('suppliers').insert(p);
   closeModal(); await loadData(); renderSuppliers();
 }
 
-function showModal(html) { document.getElementById('modal-container').innerHTML=`<div class="modal-overlay" onclick="if(event.target.classList.contains('modal-overlay'))closeModal()"><div class="modal">${html}</div></div>`; }
-function closeModal() { document.getElementById('modal-container').innerHTML=''; }
-function showToast(msg) { const t=document.createElement('div'); t.style.cssText='position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap'; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),2500); }
+// ── MODAL & TOAST ─────────────────────────────────────────────
+function showModal(html) { document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target.classList.contains('modal-overlay'))closeModal()"><div class="modal">${html}</div></div>`; }
+function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap';
+  t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2500);
+}
 </script>
 </body>
 </html>
