@@ -494,7 +494,11 @@ async function renderOrders() {
 async function showMsg(sid) {
   const items = STATE.items.filter(i => (i.supplier_id||'__none__')===sid && (i.status==='low'||i.status==='critical'));
   const sup = STATE.suppliers.find(s => s.id===sid);
-  const list = items.map(i => `- ${i.name}${i.reorder_qty?': '+i.reorder_qty+' '+(i.unit||''):''}`).join('\n');
+  const list = items.map(i => {
+    const name = i.order_name || i.name;
+    const unit = i.order_unit || i.unit || '';
+    return `- ${name}${i.reorder_qty ? ': ' + i.reorder_qty + (unit ? ' ' + unit : '') : ''}`;
+  }).join('\n');
   const msg = sup?.message_template ? sup.message_template.replace('{items}',list) : `Hi! Ordering for ${STATE.org.name}:\n\n${list}\n\nThank you!`;
   showModal(`<div class="modal-title">Order Message<button class="modal-close" onclick="closeModal()">×</button></div>
     <textarea id="omsg" style="min-height:140px;font-family:monospace;font-size:13px">${msg}</textarea>
@@ -582,12 +586,18 @@ async function saveNotificationSettings() {
 function showAddItemModal() {
   const opts = STATE.suppliers.map(s => '<option value="'+s.id+'">'+s.name+'</option>').join('');
   showModal('<div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div>' +
-    '<label>Name</label><input id="m-name" placeholder="e.g. Oat Milk"/>' +
-    '<label>Category</label><input id="m-cat" placeholder="e.g. Dairy"/>' +
+    '<label>Staff Name <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-name" placeholder="e.g. Beef Patty"/>' +
+    '<label>Category</label><input id="m-cat" placeholder="e.g. Protein"/>' +
     '<label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select>' +
-    '<label>Unit</label><input id="m-unit" placeholder="e.g. cartons, bags, kg"/>' +
+    '<label>Staff Unit <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-unit" placeholder="e.g. patties"/>' +
     '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
-    '<label>Reorder Qty (how much to order)</label><input id="m-qty" type="number" placeholder="e.g. 10"/>' +
+    '<label>Reorder Qty</label><input id="m-qty" type="number" placeholder="e.g. 75"/>' +
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
+    '<div style="font-weight:600;font-size:13px;margin-bottom:6px">📦 Supplier Order Details</div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Used in order messages to suppliers. Leave blank to use staff name/unit.</div>' +
+    '<label>Order Name</label><input id="m-oname" placeholder="e.g. Beef GC burger patty seasoned with mushroom 130g"/>' +
+    '<label>Order Unit</label><input id="m-ounit" placeholder="e.g. cartons of 75"/>' +
+    '</div>' +
     '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
     '<div style="font-weight:600;font-size:13px;margin-bottom:6px">📊 Stock Thresholds</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Set the numbers that define each button label for staff.</div>' +
@@ -602,12 +612,18 @@ function showEditItemModal(id) {
   const item = STATE.items.find(i => i.id===id); if (!item) return;
   const opts = STATE.suppliers.map(s => '<option value="'+s.id+'" '+(s.id===item.supplier_id?'selected':'')+'>'+s.name+'</option>').join('');
   showModal('<div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div>' +
-    '<label>Name</label><input id="m-name" value="'+item.name+'"/>' +
+    '<label>Staff Name <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-name" value="'+item.name+'"/>' +
     '<label>Category</label><input id="m-cat" value="'+(item.category||'')+'"/>' +
     '<label>Type</label><select id="m-type"><option value="food" '+(item.type==='food'?'selected':'')+'>Food</option><option value="non-food" '+(item.type==='non-food'?'selected':'')+'>Non-Food</option></select>' +
-    '<label>Unit</label><input id="m-unit" value="'+(item.unit||'')+'"/>' +
+    '<label>Staff Unit <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-unit" value="'+(item.unit||'')+'"/>' +
     '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
-    '<label>Reorder Qty (how much to order)</label><input id="m-qty" type="number" value="'+(item.reorder_qty||'')+'"/>' +
+    '<label>Reorder Qty</label><input id="m-qty" type="number" value="'+(item.reorder_qty||'')+'"/>' +
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
+    '<div style="font-weight:600;font-size:13px;margin-bottom:6px">📦 Supplier Order Details</div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Used in order messages to suppliers. Leave blank to use staff name/unit.</div>' +
+    '<label>Order Name</label><input id="m-oname" value="'+(item.order_name||'')+'" placeholder="e.g. Beef GC burger patty seasoned with mushroom 130g"/>' +
+    '<label>Order Unit</label><input id="m-ounit" value="'+(item.order_unit||'')+'" placeholder="e.g. cartons of 75"/>' +
+    '</div>' +
     '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
     '<div style="font-weight:600;font-size:13px;margin-bottom:6px">📊 Stock Thresholds</div>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Change these to update what the buttons show staff.</div>' +
@@ -630,6 +646,8 @@ async function saveItem(id) {
     category: document.getElementById('m-cat').value.trim(),
     type: document.getElementById('m-type').value,
     unit: document.getElementById('m-unit').value.trim(),
+    order_name: document.getElementById('m-oname').value.trim() || null,
+    order_unit: document.getElementById('m-ounit').value.trim() || null,
     supplier_id: document.getElementById('m-sup').value || null,
     reorder_qty: parseFloat(document.getElementById('m-qty').value) || null,
     low_threshold: isNaN(lowVal) ? null : lowVal,
