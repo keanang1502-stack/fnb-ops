@@ -230,7 +230,7 @@ async function loadProfile() {
     STATE.profile = data;
 
     const { data: org, error: orgErr } = await sb.from('organisations')
-      .select('id, name, invite_code')
+      .select('id, name, invite_code, notification_email, notification_time')
       .eq('id', data.org_id)
       .single();
     if (orgErr || !org) { showAuthError('Could not load org: ' + (orgErr?.message || 'not found')); return false; }
@@ -537,6 +537,8 @@ function renderSuppliers() {
 // ── SETTINGS ─────────────────────────────────────────────────
 function renderSettings() {
   const code = STATE.org?.invite_code || STATE.org?.id?.slice(0,6).toUpperCase() || '——';
+  const notifEmail = STATE.org?.notification_email || '';
+  const notifTime = STATE.org?.notification_time || '08:00';
   setContent(`
     <div class="card"><div class="card-title">☕ ${STATE.org?.name}</div>
       <div style="font-size:14px;color:var(--text-muted)">${STATE.profile?.full_name} · ${STATE.profile?.role}</div>
@@ -550,9 +552,30 @@ function renderSettings() {
         <button class="btn btn-secondary btn-sm" onclick="navigator.clipboard.writeText('${code}').then(()=>showToast('Copied!'))">Copy</button>
       </div>
     </div>
+    <div class="card"><div class="card-title">🔔 Order Reminders</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">A daily email will be sent with items that need ordering. Sent even if nothing is low.</p>
+      <label>Notification Email</label>
+      <input id="notif-email" type="email" placeholder="e.g. orders@yourcafe.com" value="${notifEmail}"/>
+      <label>Send Time (Singapore time)</label>
+      <input id="notif-time" type="time" value="${notifTime}"/>
+      <div class="btn-row"><button class="btn btn-primary" onclick="saveNotificationSettings()">Save Reminder Settings</button></div>
+    </div>
     <div class="card"><div class="card-title">⚙️ Account</div>
       <button class="btn btn-danger" onclick="doLogout()">Log Out</button>
     </div>`);
+}
+
+async function saveNotificationSettings() {
+  const email = document.getElementById('notif-email').value.trim();
+  const time = document.getElementById('notif-time').value;
+  if (!email) return showToast('Please enter a notification email');
+  const { error } = await sb.from('organisations')
+    .update({ notification_email: email, notification_time: time })
+    .eq('id', STATE.org.id);
+  if (error) return showToast('Error saving: ' + error.message);
+  STATE.org.notification_email = email;
+  STATE.org.notification_time = time;
+  showToast('Reminder settings saved ✅');
 }
 
 // ── ITEM MODALS ───────────────────────────────────────────────
