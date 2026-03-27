@@ -411,6 +411,7 @@ function filterCategory(btn, cat) {
 
 // ── LOG ──────────────────────────────────────────────────────
 function renderLog() {
+  pendingSt = {};
   const { items } = STATE;
   let html = '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
     '<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Tap what you see on the shelf for each item.</p>';
@@ -600,7 +601,7 @@ async function saveItem(id) {
     type: document.getElementById('m-type').value,
     unit: document.getElementById('m-unit').value.trim(),
     supplier_id: document.getElementById('m-sup').value || null,
-    reorder_qty: parseFloat(document.getElementById('m-qty').value) || 0,
+    reorder_qty: parseFloat(document.getElementById('m-qty').value) || null,
     low_threshold: isNaN(lowVal) ? null : lowVal,
     high_threshold: isNaN(highVal) ? null : highVal,
   };
