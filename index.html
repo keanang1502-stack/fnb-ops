@@ -413,11 +413,16 @@ function filterCategory(btn, cat) {
 function renderLog() {
   pendingSt = {};
   const { items } = STATE;
+  const isSunday = new Date().getDay() === 0;
+  const itemsToLog = isSunday ? items : items.filter(i => i.type === 'food');
+  const note = isSunday
+    ? 'Full check — food & non-food items.'
+    : 'Food items only. Non-food checked on Sundays.';
   let html = '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
-    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">Tap what you see on the shelf for each item.</p>';
-  if (!items.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items yet.</div></div>';
+    '<p style="font-size:13px;color:var(--text-muted);margin-bottom:14px">' + note + '</p>';
+  if (!itemsToLog.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items yet.</div></div>';
   else {
-    items.forEach(item => {
+    itemsToLog.forEach(item => {
       const labels = getThresholdLabels(item);
       html += '<div class="item-row">' +
         '<div class="item-info">' +
@@ -443,7 +448,9 @@ function setSt(btn, id, status) {
 }
 async function submitLog() {
   const st = { ...pendingSt };
-  STATE.items.forEach(i => { if (!st[i.id]) st[i.id] = i.status || 'ok'; });
+  const isSunday = new Date().getDay() === 0;
+  const itemsToLog = isSunday ? STATE.items : STATE.items.filter(i => i.type === 'food');
+  itemsToLog.forEach(i => { if (!st[i.id]) st[i.id] = i.status || 'ok'; });
   await Promise.all(Object.entries(st).map(([id, status]) => sb.from('items').update({ status }).eq('id', id)));
   await sb.from('stock_logs').insert(Object.entries(st).map(([item_id, status]) => ({ org_id: STATE.org.id, item_id, logged_by: STATE.user.id, log_type: 'status_check', status })));
   pendingSt = {}; showToast('Saved! ✅'); await loadData(); renderLog();
