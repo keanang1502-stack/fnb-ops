@@ -565,6 +565,23 @@ async function addCategory() {
   renderSettings();
 }
 
+async function renameCategory(oldName) {
+  const newName = prompt('Rename "' + oldName + '" to:', oldName);
+  if (!newName || newName.trim() === oldName) return;
+  const trimmed = newName.trim();
+  if (getCategories().includes(trimmed)) return showToast('Category already exists');
+  await sb.from('items').update({ category: trimmed }).eq('org_id', STATE.org.id).eq('category', oldName);
+  const orgList = STATE.org.category_list || [];
+  const newList = orgList.includes(oldName)
+    ? orgList.map(c => c === oldName ? trimmed : c)
+    : [...orgList.filter(c => c !== trimmed), trimmed];
+  const { error } = await sb.from('organisations').update({ category_list: newList }).eq('id', STATE.org.id);
+  if (error) return showToast('Error: ' + error.message);
+  STATE.org.category_list = newList;
+  await loadData();
+  renderSettings();
+}
+
 async function removeCategory(name) {
   if (!confirm('Remove "' + name + '"? Items in this category will become uncategorised.')) return;
   const newList = (STATE.org.category_list || []).filter(c => c !== name);
@@ -607,7 +624,10 @@ function renderSettings() {
       ${getCategories().map(c =>
         `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
           <span style="font-size:14px">${c}</span>
-          <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 8px" onclick="removeCategory(decodeURIComponent('${encodeURIComponent(c)}'))">Remove</button>
+          <div style="display:flex;gap:4px">
+            <button class="btn-ghost btn-sm" style="padding:4px 8px" onclick="renameCategory(decodeURIComponent('${encodeURIComponent(c)}'))">Edit</button>
+            <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 8px" onclick="removeCategory(decodeURIComponent('${encodeURIComponent(c)}'))">Remove</button>
+          </div>
         </div>`).join('')}
       <div style="display:flex;gap:8px;margin-top:12px">
         <input id="new-cat-input" placeholder="New category name" style="margin:0"/>
