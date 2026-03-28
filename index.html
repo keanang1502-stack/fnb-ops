@@ -61,6 +61,9 @@
   .status-btn.ok.selected { border-color: var(--green); background: var(--green-light); color: var(--green); }
   .status-btn.full.selected { border-color: #4F46E5; background: #EEF2FF; color: #4F46E5; }
   .status-btn:not(.selected) { color: var(--text-muted); }
+  .log-item-row { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .log-item-row:last-child { border-bottom: none; }
+  .log-item-row .status-row { margin-top: 8px; }
   .section-header { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 20px 0 8px; }
   .supplier-card { background: var(--white); border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); margin-bottom: 10px; }
   .supplier-name { font-weight: 700; font-size: 15px; }
@@ -230,7 +233,7 @@ async function loadProfile() {
     STATE.profile = data;
 
     const { data: org, error: orgErr } = await sb.from('organisations')
-      .select('id, name, invite_code, notification_email, notification_time')
+      .select('id, name, invite_code, notification_email, notification_time, category_list')
       .eq('id', data.org_id)
       .single();
     if (orgErr || !org) { showAuthError('Could not load org: ' + (orgErr?.message || 'not found')); return false; }
@@ -428,11 +431,9 @@ function renderLog() {
       html += '</div><div class="section-header" style="margin-top:16px">' + cat + '</div><div class="card">';
       catItems.forEach(item => {
         const labels = getThresholdLabels(item);
-        html += '<div class="item-row">' +
-          '<div class="item-info">' +
+        html += '<div class="log-item-row">' +
           '<div class="item-name">'+item.name+'</div>' +
-          '<div class="item-meta">'+(item.unit||'')+'</div>' +
-          '</div>' +
+          (item.unit ? '<div class="item-meta">'+item.unit+'</div>' : '') +
           '<div class="status-row">' +
           '<button class="status-btn low '+(item.status==='low'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'low\')">'+labels.low+'</button>' +
           '<button class="status-btn ok '+(!item.status||item.status==='ok'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'ok\')">'+labels.ok+'</button>' +
@@ -448,7 +449,7 @@ function renderLog() {
 
 let pendingSt = {};
 function setSt(btn, id, status) {
-  btn.closest('.item-row').querySelectorAll('.status-btn').forEach(b => b.classList.remove('selected'));
+  btn.closest('.log-item-row').querySelectorAll('.status-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected'); pendingSt[id] = status;
 }
 async function submitLog() {
@@ -543,6 +544,38 @@ function renderSuppliers() {
   setContent(html);
 }
 
+// ── CATEGORIES ───────────────────────────────────────────────
+function getCategories() {
+  const fromItems = STATE.items.map(i => i.category).filter(Boolean);
+  const fromOrg = STATE.org?.category_list || [];
+  return [...new Set([...fromOrg, ...fromItems])].sort();
+}
+
+async function addCategory() {
+  const input = document.getElementById('new-cat-input');
+  const name = input.value.trim();
+  if (!name) return showToast('Enter a category name');
+  const cats = getCategories();
+  if (cats.includes(name)) return showToast('Already exists');
+  const newList = [...(STATE.org.category_list || []), name];
+  const { error } = await sb.from('organisations').update({ category_list: newList }).eq('id', STATE.org.id);
+  if (error) return showToast('Error: ' + error.message);
+  STATE.org.category_list = newList;
+  input.value = '';
+  renderSettings();
+}
+
+async function removeCategory(name) {
+  if (!confirm('Remove "' + name + '"? Items in this category will become uncategorised.')) return;
+  const newList = (STATE.org.category_list || []).filter(c => c !== name);
+  await sb.from('items').update({ category: null }).eq('org_id', STATE.org.id).eq('category', name);
+  const { error } = await sb.from('organisations').update({ category_list: newList }).eq('id', STATE.org.id);
+  if (error) return showToast('Error: ' + error.message);
+  STATE.org.category_list = newList;
+  await loadData();
+  renderSettings();
+}
+
 // ── SETTINGS ─────────────────────────────────────────────────
 function renderSettings() {
   const code = STATE.org?.invite_code || STATE.org?.id?.slice(0,6).toUpperCase() || '——';
@@ -569,6 +602,18 @@ function renderSettings() {
       <input id="notif-time" type="time" value="${notifTime}"/>
       <div class="btn-row"><button class="btn btn-primary" onclick="saveNotificationSettings()">Save Reminder Settings</button></div>
     </div>
+    <div class="card"><div class="card-title">🏷️ Categories</div>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Used to group items in Inventory and Log. Changes apply immediately.</p>
+      ${getCategories().map(c =>
+        `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:14px">${c}</span>
+          <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 8px" onclick="removeCategory(decodeURIComponent('${encodeURIComponent(c)}'))">Remove</button>
+        </div>`).join('')}
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input id="new-cat-input" placeholder="New category name" style="margin:0"/>
+        <button class="btn btn-primary btn-sm" style="width:auto;white-space:nowrap" onclick="addCategory()">Add</button>
+      </div>
+    </div>
     <div class="card"><div class="card-title">⚙️ Account</div>
       <button class="btn btn-danger" onclick="doLogout()">Log Out</button>
     </div>`);
@@ -592,7 +637,7 @@ function showAddItemModal() {
   const opts = STATE.suppliers.map(s => '<option value="'+s.id+'">'+s.name+'</option>').join('');
   showModal('<div class="modal-title">Add Item <button class="modal-close" onclick="closeModal()">×</button></div>' +
     '<label>Staff Name <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-name" placeholder="e.g. Beef Patty"/>' +
-    '<label>Category</label><input id="m-cat" placeholder="e.g. Protein"/>' +
+    '<label>Category</label><input id="m-cat" list="cat-list" placeholder="e.g. Protein"/><datalist id="cat-list">'+getCategories().map(c=>'<option value="'+c+'">').join('')+'</datalist>' +
     '<label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select>' +
     '<label>Staff Unit <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-unit" placeholder="e.g. patties"/>' +
     '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
@@ -618,7 +663,7 @@ function showEditItemModal(id) {
   const opts = STATE.suppliers.map(s => '<option value="'+s.id+'" '+(s.id===item.supplier_id?'selected':'')+'>'+s.name+'</option>').join('');
   showModal('<div class="modal-title">Edit Item <button class="modal-close" onclick="closeModal()">×</button></div>' +
     '<label>Staff Name <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-name" value="'+item.name+'"/>' +
-    '<label>Category</label><input id="m-cat" value="'+(item.category||'')+'"/>' +
+    '<label>Category</label><input id="m-cat" list="cat-list" value="'+(item.category||'')+'"/><datalist id="cat-list">'+getCategories().map(c=>'<option value="'+c+'">').join('')+'</datalist>' +
     '<label>Type</label><select id="m-type"><option value="food" '+(item.type==='food'?'selected':'')+'>Food</option><option value="non-food" '+(item.type==='non-food'?'selected':'')+'>Non-Food</option></select>' +
     '<label>Staff Unit <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-unit" value="'+(item.unit||'')+'"/>' +
     '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
