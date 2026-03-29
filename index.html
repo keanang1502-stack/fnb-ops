@@ -50,6 +50,7 @@
   .badge-low { background: var(--red-light); color: var(--red); }
   .badge-ok { background: var(--green-light); color: var(--green); }
   .badge-full { background: #EEF2FF; color: #4F46E5; }
+  .badge-ordered { background: #FEF3C7; color: #D97706; }
   .item-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
   .item-row:last-child { border-bottom: none; }
   .item-info { flex: 1; min-width: 0; }
@@ -432,12 +433,16 @@ function renderLog() {
       html += '</div><div class="section-header" style="margin-top:16px">' + cat + '</div><div class="card">';
       catItems.forEach(item => {
         const labels = getThresholdLabels(item);
+        const isOrdered = item.status === 'ordered';
         html += '<div class="log-item-row">' +
+          '<div style="display:flex;align-items:center;gap:8px">' +
           '<div class="item-name">'+item.name+'</div>' +
+          (isOrdered ? '<span class="badge badge-ordered" style="font-size:11px">📦 Ordered</span>' : '') +
+          '</div>' +
           (item.unit ? '<div class="item-meta">'+item.unit+'</div>' : '') +
           '<div class="status-row">' +
           '<button class="status-btn low '+(item.status==='low'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'low\')">'+labels.low+'</button>' +
-          '<button class="status-btn ok '+(!item.status||item.status==='ok'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'ok\')">'+labels.ok+'</button>' +
+          '<button class="status-btn ok '+(item.status==='ok'||(!item.status&&!isOrdered)?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'ok\')">'+labels.ok+'</button>' +
           '<button class="status-btn full '+(item.status==='full'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'full\')">'+labels.full+'</button>' +
           '</div></div>';
       });
@@ -470,6 +475,7 @@ async function submitLog() {
 async function renderOrders() {
   await loadData();
   const low = STATE.items.filter(i => i.status==='low'||i.status==='critical');
+  const ordered = STATE.items.filter(i => i.status==='ordered');
   const bySup = {};
   low.forEach(item => {
     const sid = item.supplier_id || '__none__';
@@ -481,17 +487,33 @@ async function renderOrders() {
   else Object.entries(bySup).forEach(([sid, g]) => {
     const sup = g.sup;
     const today = new Date().toLocaleDateString('en-SG', { weekday: 'long' });
+    const itemRows = g.items.map(i =>
+      `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:14px">• ${i.name}${i.reorder_qty?' — '+i.reorder_qty+' '+(i.unit||''):''}</span>
+        <button class="btn btn-secondary btn-sm" style="white-space:nowrap;margin-left:8px" onclick="markItemOrdered('${i.id}')">✓ Ordered</button>
+      </div>`
+    ).join('');
     html += `<div class="order-group">
       <div class="order-group-name">${sup?.name||'Unknown Supplier'}</div>
       ${sup?.no_delivery_days?.includes(today) ? `<div style="font-size:12px;color:var(--red)">⚠️ No delivery today (${today})</div>` : ''}
       ${sup?.moq ? `<div style="font-size:12px;color:var(--text-muted)">MOQ: ${sup.moq}</div>` : ''}
-      <ul class="order-item-list" style="margin-top:8px">${g.items.map(i=>`<li>• ${i.name}${i.reorder_qty?' — '+i.reorder_qty+' '+(i.unit||''):''}</li>`).join('')}</ul>
+      <div style="margin-top:8px">${itemRows}</div>
       <div class="btn-row">
         ${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary btn-sm" style="text-decoration:none">💬 WhatsApp</a>`:''}
         <button class="btn btn-secondary btn-sm" onclick="showMsg('${sid}')">📋 Message</button>
       </div>
     </div>`;
   });
+  if (ordered.length) {
+    html += `<div class="section-header">Awaiting Delivery (${ordered.length})</div><div class="card">`;
+    ordered.forEach(i => {
+      html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div><div style="font-size:14px;font-weight:600">${i.name}</div><div style="font-size:12px;color:var(--text-muted)">${STATE.suppliers.find(s=>s.id===i.supplier_id)?.name||'No supplier'}</div></div>
+        <button class="btn btn-danger btn-sm" onclick="markItemLow('${i.id}')">Still Low</button>
+      </div>`;
+    });
+    html += '</div>';
+  }
   const { data: past } = await sb.from('orders').select('*, suppliers(name)').eq('org_id', STATE.org.id).order('created_at', { ascending: false }).limit(5);
   if (past?.length) {
     html += '<div class="section-header">Recent Orders</div><div class="card">';
@@ -519,11 +541,22 @@ async function showMsg(sid) {
     <div class="btn-row"><button class="btn btn-secondary" onclick="markSent('${sid}')">✅ Mark Sent</button></div>`);
 }
 
+async function markItemOrdered(id) {
+  await sb.from('items').update({ status: 'ordered' }).eq('id', id);
+  await loadData(); renderOrders();
+}
+
+async function markItemLow(id) {
+  await sb.from('items').update({ status: 'low' }).eq('id', id);
+  await loadData(); renderOrders();
+}
+
 async function markSent(sid) {
   const items = STATE.items.filter(i => (i.supplier_id||'__none__')===sid && (i.status==='low'||i.status==='critical'));
   const msg = document.getElementById('omsg')?.value||'';
   const { data: order } = await sb.from('orders').insert({ org_id: STATE.org.id, supplier_id: sid==='__none__'?null:sid, created_by: STATE.user.id, status: 'sent', message_text: msg, ordered_at: new Date() }).select().single();
   if (order) await sb.from('order_items').insert(items.map(i => ({ order_id: order.id, item_id: i.id, quantity: i.reorder_qty||1, unit: i.unit })));
+  await Promise.all(items.map(i => sb.from('items').update({ status: 'ordered' }).eq('id', i.id)));
   closeModal(); showToast('Order marked sent ✅'); await loadData(); renderOrders();
 }
 
