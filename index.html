@@ -425,7 +425,8 @@ function filterCategory(btn, cat) {
 }
 
 // ── LOG ──────────────────────────────────────────────────────
-function renderLog() {
+async function renderLog() {
+  await loadData();
   pendingSt = {};
   const { items } = STATE;
   const today = new Date().getDay();
