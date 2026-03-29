@@ -507,9 +507,8 @@ async function renderLog() {
     }
   }
 
-  // Save buttons inside the card
-  if (countItems.length) html += '<div class="btn-row" style="margin-top:16px"><button class="btn btn-primary" onclick="saveCountLog()">Save Count</button></div>';
-  if (itemsToLog.length) html += '<div class="btn-row"' + (countItems.length ? '' : ' style="margin-top:16px"') + '><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
+  // Single save button
+  if (countItems.length || itemsToLog.length) html += '<div class="btn-row" style="margin-top:16px"><button class="btn btn-primary" onclick="saveAll()">Save Status Check</button></div>';
 
   html += '</div>';
 
@@ -524,6 +523,46 @@ function updateClosing(id) {
   const del = parseFloat(document.getElementById('cnt-del-'+id)?.value) || 0;
   const el = document.getElementById('cnt-close-'+id);
   if (el) el.textContent = Math.max(0, opening - sold - wst + del);
+}
+
+async function saveAll() {
+  const countItems = STATE.items.filter(i => i.track_count);
+  const today = new Date().getDay();
+  const itemsToLog = STATE.items.filter(i => {
+    if (i.status === 'ordered') return false;
+    if (i.track_count) return false;
+    if (i.log_days && i.log_days.length > 0) return i.log_days.includes(today);
+    return i.type === 'food' || today === 0;
+  });
+  const promises = [];
+  // Save counts
+  if (countItems.length) {
+    const todayDate = new Date().toLocaleDateString('en-CA');
+    countItems.forEach(item => {
+      const sold = parseFloat(document.getElementById('cnt-sold-'+item.id)?.value) || 0;
+      const wst = parseFloat(document.getElementById('cnt-wst-'+item.id)?.value) || 0;
+      const del = parseFloat(document.getElementById('cnt-del-'+item.id)?.value) || 0;
+      const opening = item.current_count || 0;
+      const closing = Math.max(0, opening - sold - wst + del);
+      const newStatus = item.low_threshold != null && closing < item.low_threshold ? 'low' : 'ok';
+      promises.push(
+        sb.from('items').update({ current_count: closing, status: newStatus }).eq('id', item.id),
+        sb.from('item_count_logs').upsert({ item_id: item.id, org_id: STATE.org.id, date: todayDate, opening_count: opening, sold, wastage: wst, delivery: del, closing_count: closing, logged_by: STATE.user.id }, { onConflict: 'item_id,date' })
+      );
+    });
+  }
+  // Save statuses
+  if (itemsToLog.length) {
+    const st = { ...pendingSt };
+    itemsToLog.forEach(i => { if (!st[i.id]) st[i.id] = i.status || 'ok'; });
+    Object.entries(st).forEach(([id, status]) => promises.push(sb.from('items').update({ status }).eq('id', id)));
+    promises.push(sb.from('stock_logs').insert(Object.entries(st).map(([item_id, status]) => ({ org_id: STATE.org.id, item_id, logged_by: STATE.user.id, log_type: 'status_check', status }))));
+  }
+  await Promise.all(promises);
+  pendingSt = {};
+  showToast('Saved! ✅');
+  await loadData();
+  renderLog();
 }
 
 async function saveCountLog() {
