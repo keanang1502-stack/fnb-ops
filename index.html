@@ -458,7 +458,7 @@ function renderLog() {
     '<p style="font-size:13px;color:var(--text-muted);margin-bottom:0">' + note + '</p>';
   if (!itemsToLog.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items scheduled today.</div></div>';
   else {
-    const categories = [...new Set(itemsToLog.map(i => i.category || 'Uncategorised'))];
+    const categories = [...getCategories().filter(c => itemsToLog.some(i => (i.category || 'Uncategorised') === c)), ...([...new Set(itemsToLog.map(i => i.category || 'Uncategorised'))].filter(c => !getCategories().includes(c)))];
     categories.forEach(cat => {
       const catItems = itemsToLog.filter(i => (i.category || 'Uncategorised') === cat);
       html += '</div><div class="section-header" style="margin-top:16px">' + cat + '</div><div class="card">';
