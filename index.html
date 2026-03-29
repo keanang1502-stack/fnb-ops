@@ -769,7 +769,17 @@ function showSupplierModal(id) {
     <label>Lead Time (days)</label><input id="s-lead" type="number" value="${s?.lead_time_days||1}"/>
     <label>No Delivery Days</label>${checks}
     <label>Message Template</label><textarea id="s-tmpl" placeholder="Hi! Order:\n{items}\nThanks!">${s?.message_template||''}</textarea>
-    <div class="btn-row"><button class="btn btn-primary" onclick="saveSupplier('${s?.id||''}')">Save</button></div>`);
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveSupplier('${s?.id||''}')">Save</button>
+      ${s ? `<button class="btn btn-danger" onclick="removeSupplier('${s.id}')">Remove</button>` : ''}
+    </div>`);
+}
+
+async function removeSupplier(id) {
+  if (!confirm('Remove this supplier? Items linked to them will have no supplier assigned.')) return;
+  await sb.from('items').update({ supplier_id: null }).eq('org_id', STATE.org.id).eq('supplier_id', id);
+  await sb.from('suppliers').delete().eq('id', id);
+  closeModal(); await loadData(); renderSuppliers();
 }
 
 async function saveSupplier(id) {
