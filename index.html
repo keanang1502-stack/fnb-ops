@@ -416,11 +416,12 @@ function filterCategory(btn, cat) {
 function renderLog() {
   pendingSt = {};
   const { items } = STATE;
-  const isSunday = new Date().getDay() === 0;
-  const itemsToLog = isSunday ? items : items.filter(i => i.type === 'food');
-  const note = isSunday
-    ? 'Full check — food & non-food items.'
-    : 'Food items only. Non-food checked on Sundays.';
+  const today = new Date().getDay();
+  const itemsToLog = items.filter(i => {
+    if (i.log_days && i.log_days.length > 0) return i.log_days.includes(today);
+    return i.type === 'food' || today === 0;
+  });
+  const note = itemsToLog.length + ' item' + (itemsToLog.length !== 1 ? 's' : '') + ' scheduled for today.';
   let html = '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
     '<p style="font-size:13px;color:var(--text-muted);margin-bottom:0">' + note + '</p>';
   if (!itemsToLog.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items yet.</div></div>';
@@ -454,8 +455,11 @@ function setSt(btn, id, status) {
 }
 async function submitLog() {
   const st = { ...pendingSt };
-  const isSunday = new Date().getDay() === 0;
-  const itemsToLog = isSunday ? STATE.items : STATE.items.filter(i => i.type === 'food');
+  const today = new Date().getDay();
+  const itemsToLog = STATE.items.filter(i => {
+    if (i.log_days && i.log_days.length > 0) return i.log_days.includes(today);
+    return i.type === 'food' || today === 0;
+  });
   itemsToLog.forEach(i => { if (!st[i.id]) st[i.id] = i.status || 'ok'; });
   await Promise.all(Object.entries(st).map(([id, status]) => sb.from('items').update({ status }).eq('id', id)));
   await sb.from('stock_logs').insert(Object.entries(st).map(([item_id, status]) => ({ org_id: STATE.org.id, item_id, logged_by: STATE.user.id, log_type: 'status_check', status })));
@@ -542,6 +546,19 @@ function renderSuppliers() {
     </div>`;
   });
   setContent(html);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function renderDaySelector(logDays) {
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  return '<label>Log Days <span style="font-weight:400;color:var(--text-muted)">(leave all off = use default schedule)</span></label>' +
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">' +
+    days.map((d,i) =>
+      '<label style="display:inline-flex;align-items:center;gap:4px;font-size:13px;padding:6px 10px;border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-weight:500">' +
+      '<input type="checkbox" id="day-'+i+'" style="width:auto;margin:0"'+(logDays?.includes(i)?' checked':'')+'>'+d+'</label>'
+    ).join('') +
+    '</div>' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">Default: food items daily, non-food Sundays only.</div>';
 }
 
 // ── CATEGORIES ───────────────────────────────────────────────
@@ -659,6 +676,7 @@ function showAddItemModal() {
     '<label>Staff Name <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-name" placeholder="e.g. Beef Patty"/>' +
     '<label>Category</label><input id="m-cat" list="cat-list" placeholder="e.g. Protein"/><datalist id="cat-list">'+getCategories().map(c=>'<option value="'+c+'">').join('')+'</datalist>' +
     '<label>Type</label><select id="m-type"><option value="food">Food</option><option value="non-food">Non-Food</option></select>' +
+    renderDaySelector(null) +
     '<label>Staff Unit <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-unit" placeholder="e.g. patties"/>' +
     '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
     '<label>Reorder Qty</label><input id="m-qty" type="number" placeholder="e.g. 75"/>' +
@@ -685,6 +703,7 @@ function showEditItemModal(id) {
     '<label>Staff Name <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-name" value="'+item.name+'"/>' +
     '<label>Category</label><input id="m-cat" list="cat-list" value="'+(item.category||'')+'"/><datalist id="cat-list">'+getCategories().map(c=>'<option value="'+c+'">').join('')+'</datalist>' +
     '<label>Type</label><select id="m-type"><option value="food" '+(item.type==='food'?'selected':'')+'>Food</option><option value="non-food" '+(item.type==='non-food'?'selected':'')+'>Non-Food</option></select>' +
+    renderDaySelector(item.log_days) +
     '<label>Staff Unit <span style="font-weight:400;color:var(--text-muted)">(what employees see)</span></label><input id="m-unit" value="'+(item.unit||'')+'"/>' +
     '<label>Supplier</label><select id="m-sup"><option value="">— None —</option>'+opts+'</select>' +
     '<label>Reorder Qty</label><input id="m-qty" type="number" value="'+(item.reorder_qty||'')+'"/>' +
@@ -710,11 +729,13 @@ function showEditItemModal(id) {
 async function saveItem(id) {
   const lowVal = parseFloat(document.getElementById('m-low').value);
   const highVal = parseFloat(document.getElementById('m-high').value);
+  const logDays = [0,1,2,3,4,5,6].filter(i => document.getElementById('day-'+i)?.checked);
   const p = {
     org_id: STATE.org.id,
     name: document.getElementById('m-name').value.trim(),
     category: document.getElementById('m-cat').value.trim(),
     type: document.getElementById('m-type').value,
+    log_days: logDays.length ? logDays : null,
     unit: document.getElementById('m-unit').value.trim(),
     order_name: document.getElementById('m-oname').value.trim() || null,
     order_unit: document.getElementById('m-ounit').value.trim() || null,
