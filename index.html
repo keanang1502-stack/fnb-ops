@@ -448,7 +448,7 @@ function renderLog() {
         ' <span style="font-size:13px;color:var(--text-muted);font-weight:400">Opening: ' + opening + ' ' + (item.unit||'') + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
         '<div><label style="margin:0 0 4px">Sold</label><input id="cnt-sold-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
-        '<div><label style="margin:0 0 4px">Wastage</label><input id="cnt-wst-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '<div><label style="margin:0 0 4px">Wastage/Staff Meal</label><input id="cnt-wst-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
         '<div><label style="margin:0 0 4px">Delivery</label><input id="cnt-del-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
         '</div>' +
         '<div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--brand)">Closing: <span id="cnt-close-' + item.id + '">' + opening + '</span> ' + (item.unit||'') + '</div>' +
@@ -512,12 +512,21 @@ function updateClosing(id) {
 
 async function saveCountLog() {
   const countItems = STATE.items.filter(i => i.track_count);
+  const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD in local time
   await Promise.all(countItems.map(item => {
     const sold = parseFloat(document.getElementById('cnt-sold-'+item.id)?.value) || 0;
     const wst = parseFloat(document.getElementById('cnt-wst-'+item.id)?.value) || 0;
     const del = parseFloat(document.getElementById('cnt-del-'+item.id)?.value) || 0;
-    const closing = Math.max(0, (item.current_count || 0) - sold - wst + del);
-    return sb.from('items').update({ current_count: closing }).eq('id', item.id);
+    const opening = item.current_count || 0;
+    const closing = Math.max(0, opening - sold - wst + del);
+    return Promise.all([
+      sb.from('items').update({ current_count: closing }).eq('id', item.id),
+      sb.from('item_count_logs').upsert({
+        item_id: item.id, org_id: STATE.org.id, date: today,
+        opening_count: opening, sold, wastage: wst, delivery: del,
+        closing_count: closing, logged_by: STATE.user.id
+      }, { onConflict: 'item_id,date' })
+    ]);
   }));
   showToast('Count saved ✅');
   await loadData();
