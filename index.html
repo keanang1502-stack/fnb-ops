@@ -437,6 +437,26 @@ function renderLog() {
   });
   let html = '';
 
+  // Daily count section
+  const countItems = items.filter(i => i.track_count);
+  if (countItems.length) {
+    html += '<div class="card"><div class="card-title">🔢 Daily Count</div>';
+    countItems.forEach(item => {
+      const opening = item.current_count || 0;
+      html += '<div style="padding:12px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="font-weight:600;font-size:15px;margin-bottom:8px">' + item.name +
+        ' <span style="font-size:13px;color:var(--text-muted);font-weight:400">Opening: ' + opening + ' ' + (item.unit||'') + '</span></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+        '<div><label style="margin:0 0 4px">Sold</label><input id="cnt-sold-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '<div><label style="margin:0 0 4px">Wastage</label><input id="cnt-wst-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '<div><label style="margin:0 0 4px">Delivery</label><input id="cnt-del-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--brand)">Closing: <span id="cnt-close-' + item.id + '">' + opening + '</span> ' + (item.unit||'') + '</div>' +
+        '</div>';
+    });
+    html += '<div class="btn-row"><button class="btn btn-primary" onclick="saveCountLog()">Save Count</button></div></div>';
+  }
+
   // Pending delivery section
   if (pendingDelivery.length) {
     html += '<div class="card" style="border-left:3px solid var(--brand)">' +
@@ -478,6 +498,30 @@ function renderLog() {
   }
   html += '</div>';
   setContent(html);
+}
+
+function updateClosing(id) {
+  const item = STATE.items.find(i => i.id === id);
+  const opening = item?.current_count || 0;
+  const sold = parseFloat(document.getElementById('cnt-sold-'+id)?.value) || 0;
+  const wst = parseFloat(document.getElementById('cnt-wst-'+id)?.value) || 0;
+  const del = parseFloat(document.getElementById('cnt-del-'+id)?.value) || 0;
+  const el = document.getElementById('cnt-close-'+id);
+  if (el) el.textContent = Math.max(0, opening - sold - wst + del);
+}
+
+async function saveCountLog() {
+  const countItems = STATE.items.filter(i => i.track_count);
+  await Promise.all(countItems.map(item => {
+    const sold = parseFloat(document.getElementById('cnt-sold-'+item.id)?.value) || 0;
+    const wst = parseFloat(document.getElementById('cnt-wst-'+item.id)?.value) || 0;
+    const del = parseFloat(document.getElementById('cnt-del-'+item.id)?.value) || 0;
+    const closing = Math.max(0, (item.current_count || 0) - sold - wst + del);
+    return sb.from('items').update({ current_count: closing }).eq('id', item.id);
+  }));
+  showToast('Count saved ✅');
+  await loadData();
+  renderLog();
 }
 
 let pendingSt = {};
@@ -848,6 +892,11 @@ function showAddItemModal() {
     '<label>🟢 Full — above this number</label><input id="m-high" type="number" placeholder="e.g. 10"/>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">🟡 OK = between Low and Full</div>' +
     '</div>' +
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
+    '<div style="font-weight:600;font-size:13px;margin-bottom:6px">🔢 Exact Count Tracking</div>' +
+    '<label style="display:inline-flex;align-items:center;gap:8px;margin-top:4px;cursor:pointer"><input type="checkbox" id="m-track" style="width:auto;margin:0"> Track daily count for this item</label>' +
+    '<label>Starting Count</label><input id="m-count" type="number" placeholder="e.g. 120" value="0"/>' +
+    '</div>' +
     '<div class="btn-row"><button class="btn btn-primary" onclick="saveItem()">Add Item</button></div>');
 }
 
@@ -875,6 +924,11 @@ function showEditItemModal(id) {
     '<label>🟢 Full — above this number</label><input id="m-high" type="number" value="'+(item.high_threshold!=null?item.high_threshold:'')+'"/>' +
     '<div style="font-size:12px;color:var(--text-muted);margin-top:6px">🟡 OK = between Low and Full</div>' +
     '</div>' +
+    '<div style="background:var(--bg);border-radius:8px;padding:12px;margin-top:12px">' +
+    '<div style="font-weight:600;font-size:13px;margin-bottom:6px">🔢 Exact Count Tracking</div>' +
+    '<label style="display:inline-flex;align-items:center;gap:8px;margin-top:4px;cursor:pointer"><input type="checkbox" id="m-track" style="width:auto;margin:0"'+(item.track_count?' checked':'')+'>Track daily count for this item</label>' +
+    '<label>Current Count</label><input id="m-count" type="number" value="'+(item.current_count||0)+'"/>' +
+    '</div>' +
     '<div class="btn-row">' +
     '<button class="btn btn-primary" onclick="saveItem(\''+id+'\')">Save</button>' +
     '<button class="btn btn-danger" onclick="removeItem(\''+id+'\')">Remove</button>' +
@@ -898,6 +952,8 @@ async function saveItem(id) {
     reorder_qty: parseFloat(document.getElementById('m-qty').value) || null,
     low_threshold: isNaN(lowVal) ? null : lowVal,
     high_threshold: isNaN(highVal) ? null : highVal,
+    track_count: document.getElementById('m-track')?.checked || false,
+    current_count: parseFloat(document.getElementById('m-count')?.value) || 0,
   };
   if (!p.name) return showToast('Please enter a name');
   if (id) await sb.from('items').update(p).eq('id', id);
