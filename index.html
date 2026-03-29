@@ -418,14 +418,34 @@ function renderLog() {
   pendingSt = {};
   const { items } = STATE;
   const today = new Date().getDay();
+  const pendingDelivery = items.filter(i => i.status === 'ordered');
   const itemsToLog = items.filter(i => {
+    if (i.status === 'ordered') return false;
     if (i.log_days && i.log_days.length > 0) return i.log_days.includes(today);
     return i.type === 'food' || today === 0;
   });
+  let html = '';
+
+  // Pending delivery section
+  if (pendingDelivery.length) {
+    html += '<div class="card" style="border-left:3px solid var(--brand)">' +
+      '<div class="card-title">📦 Pending Delivery (' + pendingDelivery.length + ')</div>' +
+      '<p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Tap Delivered when stock arrives.</p>';
+    pendingDelivery.forEach(item => {
+      html += '<div class="log-item-row">' +
+        '<div class="item-name">' + item.name + '</div>' +
+        (item.unit ? '<div class="item-meta">' + item.unit + '</div>' : '') +
+        '<div style="margin-top:8px"><button class="btn btn-primary btn-sm" style="width:auto" onclick="markDelivered(\'' + item.id + '\')">✓ Delivered</button></div>' +
+        '</div>';
+    });
+    html += '</div>';
+  }
+
+  // Stock check section
   const note = itemsToLog.length + ' item' + (itemsToLog.length !== 1 ? 's' : '') + ' scheduled for today.';
-  let html = '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
+  html += '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
     '<p style="font-size:13px;color:var(--text-muted);margin-bottom:0">' + note + '</p>';
-  if (!itemsToLog.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items yet.</div></div>';
+  if (!itemsToLog.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items scheduled today.</div></div>';
   else {
     const categories = [...new Set(itemsToLog.map(i => i.category || 'Uncategorised'))];
     categories.forEach(cat => {
@@ -433,23 +453,19 @@ function renderLog() {
       html += '</div><div class="section-header" style="margin-top:16px">' + cat + '</div><div class="card">';
       catItems.forEach(item => {
         const labels = getThresholdLabels(item);
-        const isOrdered = item.status === 'ordered';
         html += '<div class="log-item-row">' +
-          '<div style="display:flex;align-items:center;gap:8px">' +
-          '<div class="item-name">'+item.name+'</div>' +
-          (isOrdered ? '<span class="badge badge-ordered" style="font-size:11px">📦 Ordered</span>' : '') +
-          '</div>' +
-          (item.unit ? '<div class="item-meta">'+item.unit+'</div>' : '') +
+          '<div class="item-name">' + item.name + '</div>' +
+          (item.unit ? '<div class="item-meta">' + item.unit + '</div>' : '') +
           '<div class="status-row">' +
-          '<button class="status-btn low '+(item.status==='low'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'low\')">'+labels.low+'</button>' +
-          '<button class="status-btn ok '+(item.status==='ok'||(!item.status&&!isOrdered)?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'ok\')">'+labels.ok+'</button>' +
-          '<button class="status-btn full '+(item.status==='full'?'selected':'')+'" onclick="setSt(this,\''+item.id+'\',\'full\')">'+labels.full+'</button>' +
+          '<button class="status-btn low ' + (item.status==='low'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'low\')">' + labels.low + '</button>' +
+          '<button class="status-btn ok ' + (!item.status||item.status==='ok'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'ok\')">' + labels.ok + '</button>' +
+          '<button class="status-btn full ' + (item.status==='full'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'full\')">' + labels.full + '</button>' +
           '</div></div>';
       });
     });
     html += '<div class="btn-row"><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
   }
-  html += '</div>';  // close last category card
+  html += '</div>';
   setContent(html);
 }
 
@@ -539,6 +555,11 @@ async function showMsg(sid) {
       ${sup?.whatsapp_link?`<a href="${sup.whatsapp_link}" target="_blank" class="btn btn-primary" style="text-decoration:none">💬 WhatsApp</a>`:''}
     </div>
     <div class="btn-row"><button class="btn btn-secondary" onclick="markSent('${sid}')">✅ Mark Sent</button></div>`);
+}
+
+async function markDelivered(id) {
+  await sb.from('items').update({ status: 'full' }).eq('id', id);
+  await loadData(); renderLog();
 }
 
 async function markItemOrdered(id) {
