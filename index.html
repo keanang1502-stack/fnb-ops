@@ -430,32 +430,14 @@ function renderLog() {
   const { items } = STATE;
   const today = new Date().getDay();
   const pendingDelivery = items.filter(i => i.status === 'ordered');
+  const countItems = items.filter(i => i.track_count);
   const itemsToLog = items.filter(i => {
     if (i.status === 'ordered') return false;
+    if (i.track_count) return false;
     if (i.log_days && i.log_days.length > 0) return i.log_days.includes(today);
     return i.type === 'food' || today === 0;
   });
   let html = '';
-
-  // Daily count section
-  const countItems = items.filter(i => i.track_count);
-  if (countItems.length) {
-    html += '<div class="card"><div class="card-title">🔢 Daily Count</div>';
-    countItems.forEach(item => {
-      const opening = item.current_count || 0;
-      html += '<div style="padding:12px 0;border-bottom:1px solid var(--border)">' +
-        '<div style="font-weight:600;font-size:15px;margin-bottom:8px">' + item.name +
-        ' <span style="font-size:13px;color:var(--text-muted);font-weight:400">Opening: ' + opening + ' ' + (item.unit||'') + '</span></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
-        '<div><label style="margin:0 0 4px">Sold</label><input id="cnt-sold-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
-        '<div><label style="margin:0 0 4px">Wastage/Staff Meal</label><input id="cnt-wst-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
-        '<div><label style="margin:0 0 4px">Delivery</label><input id="cnt-del-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
-        '</div>' +
-        '<div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--brand)">Closing: <span id="cnt-close-' + item.id + '">' + opening + '</span> ' + (item.unit||'') + '</div>' +
-        '</div>';
-    });
-    html += '<div class="btn-row"><button class="btn btn-primary" onclick="saveCountLog()">Save Count</button></div></div>';
-  }
 
   // Pending delivery section
   if (pendingDelivery.length) {
@@ -497,6 +479,26 @@ function renderLog() {
     html += '<div class="btn-row"><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
   }
   html += '</div>';
+
+  // Daily count section (below status check)
+  if (countItems.length) {
+    html += '<div class="card"><div class="card-title">🔢 Daily Count</div>';
+    countItems.forEach(item => {
+      const opening = item.current_count || 0;
+      html += '<div style="padding:12px 0;border-bottom:1px solid var(--border)">' +
+        '<div style="font-weight:600;font-size:15px;margin-bottom:8px">' + item.name +
+        ' <span style="font-size:13px;color:var(--text-muted);font-weight:400">Opening: ' + opening + ' ' + (item.unit||'') + '</span></div>' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
+        '<div><label style="margin:0 0 4px">Sold</label><input id="cnt-sold-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '<div><label style="margin:0 0 4px">Wastage/Staff Meal</label><input id="cnt-wst-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '<div><label style="margin:0 0 4px">Delivery</label><input id="cnt-del-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        '</div>' +
+        '<div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--brand)">Closing: <span id="cnt-close-' + item.id + '">' + opening + '</span> ' + (item.unit||'') + '</div>' +
+        '</div>';
+    });
+    html += '<div class="btn-row"><button class="btn btn-primary" onclick="saveCountLog()">Save Count</button></div></div>';
+  }
+
   setContent(html);
 }
 
@@ -519,8 +521,9 @@ async function saveCountLog() {
     const del = parseFloat(document.getElementById('cnt-del-'+item.id)?.value) || 0;
     const opening = item.current_count || 0;
     const closing = Math.max(0, opening - sold - wst + del);
+    const newStatus = item.low_threshold != null && closing < item.low_threshold ? 'low' : 'ok';
     return Promise.all([
-      sb.from('items').update({ current_count: closing }).eq('id', item.id),
+      sb.from('items').update({ current_count: closing, status: newStatus }).eq('id', item.id),
       sb.from('item_count_logs').upsert({
         item_id: item.id, org_id: STATE.org.id, date: today,
         opening_count: opening, sold, wastage: wst, delivery: del,
