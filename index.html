@@ -455,37 +455,18 @@ function renderLog() {
   }
 
   // Stock check section
-  const note = itemsToLog.length + ' item' + (itemsToLog.length !== 1 ? 's' : '') + ' scheduled for today.';
+  const noteParts = [];
+  if (countItems.length) noteParts.push(countItems.length + ' count item' + (countItems.length !== 1 ? 's' : ''));
+  if (itemsToLog.length) noteParts.push(itemsToLog.length + ' status item' + (itemsToLog.length !== 1 ? 's' : ''));
+  const note = noteParts.length ? noteParts.join(' · ') + ' today.' : 'No items scheduled today.';
   html += '<div class="card"><div class="card-title">📋 End-of-Shift Status Check</div>' +
     '<p style="font-size:13px;color:var(--text-muted);margin-bottom:0">' + note + '</p>';
-  if (!itemsToLog.length) html += '<div class="empty"><div class="empty-icon">📋</div><div>No items scheduled today.</div></div>';
-  else {
-    const categories = [...getCategories().filter(c => itemsToLog.some(i => (i.category || 'Uncategorised') === c)), ...([...new Set(itemsToLog.map(i => i.category || 'Uncategorised'))].filter(c => !getCategories().includes(c)))];
-    categories.forEach(cat => {
-      const catItems = itemsToLog.filter(i => (i.category || 'Uncategorised') === cat);
-      html += '</div><div class="section-header" style="margin-top:16px">' + cat + '</div><div class="card">';
-      catItems.forEach(item => {
-        const labels = getThresholdLabels(item);
-        html += '<div class="log-item-row">' +
-          '<div class="item-name">' + item.name + '</div>' +
-          (item.unit ? '<div class="item-meta">' + item.unit + '</div>' : '') +
-          '<div class="status-row">' +
-          '<button class="status-btn low ' + (item.status==='low'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'low\')">' + labels.low + '</button>' +
-          '<button class="status-btn ok ' + (!item.status||item.status==='ok'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'ok\')">' + labels.ok + '</button>' +
-          '<button class="status-btn full ' + (item.status==='full'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'full\')">' + labels.full + '</button>' +
-          '</div></div>';
-      });
-    });
-    html += '<div class="btn-row"><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
-  }
-  html += '</div>';
 
-  // Daily count section (below status check)
+  // Count items first inside the card
   if (countItems.length) {
-    html += '<div class="card"><div class="card-title">🔢 Daily Count</div>';
     countItems.forEach(item => {
       const opening = item.current_count || 0;
-      html += '<div style="padding:12px 0;border-bottom:1px solid var(--border)">' +
+      html += '<div style="padding:12px 0;border-bottom:1px solid var(--border);margin-top:8px">' +
         '<div style="font-weight:600;font-size:15px;margin-bottom:8px">' + item.name +
         ' <span style="font-size:13px;color:var(--text-muted);font-weight:400">Opening: ' + opening + ' ' + (item.unit||'') + '</span></div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
@@ -496,8 +477,40 @@ function renderLog() {
         '<div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--brand)">Closing: <span id="cnt-close-' + item.id + '">' + opening + '</span> ' + (item.unit||'') + '</div>' +
         '</div>';
     });
-    html += '<div class="btn-row"><button class="btn btn-primary" onclick="saveCountLog()">Save Count</button></div></div>';
   }
+
+  if (!itemsToLog.length && !countItems.length) {
+    html += '<div class="empty"><div class="empty-icon">📋</div><div>No items scheduled today.</div></div>';
+  } else {
+    // Status items grouped by category
+    if (itemsToLog.length) {
+      const categories = getCategories().filter(c => itemsToLog.some(i => (i.category || 'Uncategorised') === c));
+      const uncatPresent = itemsToLog.some(i => !i.category);
+      if (uncatPresent && !categories.includes('Uncategorised')) categories.push('Uncategorised');
+      categories.forEach(cat => {
+        const catItems = itemsToLog.filter(i => (i.category || 'Uncategorised') === cat);
+        if (!catItems.length) return;
+        html += '<div class="section-header" style="margin-top:16px;margin-bottom:4px">' + cat + '</div>';
+        catItems.forEach(item => {
+          const labels = getThresholdLabels(item);
+          html += '<div class="log-item-row">' +
+            '<div class="item-name">' + item.name + '</div>' +
+            (item.unit ? '<div class="item-meta">' + item.unit + '</div>' : '') +
+            '<div class="status-row">' +
+            '<button class="status-btn low ' + (item.status==='low'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'low\')">' + labels.low + '</button>' +
+            '<button class="status-btn ok ' + (!item.status||item.status==='ok'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'ok\')">' + labels.ok + '</button>' +
+            '<button class="status-btn full ' + (item.status==='full'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'full\')">' + labels.full + '</button>' +
+            '</div></div>';
+        });
+      });
+    }
+  }
+
+  // Save buttons inside the card
+  if (countItems.length) html += '<div class="btn-row" style="margin-top:16px"><button class="btn btn-primary" onclick="saveCountLog()">Save Count</button></div>';
+  if (itemsToLog.length) html += '<div class="btn-row"' + (countItems.length ? '' : ' style="margin-top:16px"') + '><button class="btn btn-primary" onclick="submitLog()">Save Status Check</button></div>';
+
+  html += '</div>';
 
   setContent(html);
 }
