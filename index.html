@@ -630,7 +630,20 @@ function renderDaySelector(logDays) {
 function getCategories() {
   const fromItems = STATE.items.map(i => i.category).filter(Boolean);
   const fromOrg = STATE.org?.category_list || [];
-  return [...new Set([...fromOrg, ...fromItems])].sort();
+  const ordered = [...fromOrg];
+  fromItems.forEach(c => { if (!ordered.includes(c)) ordered.push(c); });
+  return [...new Set(ordered)];
+}
+
+async function moveCat(idx, dir) {
+  const cats = getCategories();
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= cats.length) return;
+  [cats[idx], cats[newIdx]] = [cats[newIdx], cats[idx]];
+  const { error } = await sb.from('organisations').update({ category_list: cats }).eq('id', STATE.org.id);
+  if (error) return showToast('Error: ' + error.message);
+  STATE.org.category_list = cats;
+  renderSettings();
 }
 
 async function addCategory() {
@@ -740,9 +753,15 @@ async function renderSettings() {
     </div>
     <div class="card"><div class="card-title">🏷️ Categories</div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Used to group items in Inventory and Log. Changes apply immediately.</p>
-      ${getCategories().map(c =>
+      ${getCategories().map((c, i, arr) =>
         `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
-          <span style="font-size:14px">${c}</span>
+          <div style="display:flex;align-items:center;gap:6px">
+            <div style="display:flex;flex-direction:column;gap:1px">
+              <button class="btn-ghost btn-sm" style="padding:1px 6px;line-height:1" onclick="moveCat(${i},-1)" ${i===0?'disabled':''}>▲</button>
+              <button class="btn-ghost btn-sm" style="padding:1px 6px;line-height:1" onclick="moveCat(${i},1)" ${i===arr.length-1?'disabled':''}>▼</button>
+            </div>
+            <span style="font-size:14px">${c}</span>
+          </div>
           <div style="display:flex;gap:4px">
             <button class="btn-ghost btn-sm" style="padding:4px 8px" onclick="renameCategory(decodeURIComponent('${encodeURIComponent(c)}'))">Edit</button>
             <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 8px" onclick="removeCategory(decodeURIComponent('${encodeURIComponent(c)}'))">Remove</button>
