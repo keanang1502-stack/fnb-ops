@@ -202,9 +202,18 @@ function showAuthError(msg) {
 }
 function clearAuthError() { document.getElementById('auth-error').style.display = 'none'; }
 function setContent(html) { document.getElementById('page-content').innerHTML = html; }
+function isStaff() { return STATE.profile?.role === 'staff'; }
+function isAdmin() { return STATE.profile?.role === 'owner' || STATE.profile?.role === 'admin'; }
+
 function showApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'block';
+  if (isStaff()) {
+    ['inventory','orders','suppliers','settings'].forEach(p => {
+      const el = document.getElementById('nav-' + p);
+      if (el) el.style.display = 'none';
+    });
+  }
 }
 function showAuth() {
   document.getElementById('app').style.display = 'none';
@@ -217,7 +226,7 @@ window.addEventListener('load', async () => {
   if (session?.user) {
     STATE.user = session.user;
     const ok = await loadProfile();
-    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+    if (ok) { showApp(); await loadData(); navigate(isStaff() ? 'log' : 'inventory'); }
     else { showAuth(); }
   } else {
     showAuth();
@@ -284,7 +293,7 @@ async function doLogin() {
     if (error) { showAuthError('Login failed: ' + error.message); return; }
     STATE.user = data.user;
     const ok = await loadProfile();
-    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+    if (ok) { showApp(); await loadData(); navigate(isStaff() ? 'log' : 'inventory'); }
   } catch(e) {
     showAuthError('Error: ' + e.message);
   } finally {
@@ -330,7 +339,7 @@ async function doSignup() {
     }
 
     const ok = await loadProfile();
-    if (ok) { showApp(); await loadData(); navigate('inventory'); }
+    if (ok) { showApp(); await loadData(); navigate(isStaff() ? 'log' : 'inventory'); }
   } catch(e) {
     showAuthError('Unexpected error: ' + e.message);
   } finally {
@@ -346,6 +355,7 @@ async function doLogout() {
 
 // ── NAVIGATION ───────────────────────────────────────────────
 function navigate(page) {
+  if (isStaff() && page !== 'log') return;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('nav-' + page)?.classList.add('active');
   ({ inventory: renderInventory, log: renderLog, orders: renderOrders, suppliers: renderSuppliers, settings: renderSettings })[page]?.();
@@ -665,10 +675,35 @@ async function removeCategory(name) {
 }
 
 // ── SETTINGS ─────────────────────────────────────────────────
-function renderSettings() {
+async function renderSettings() {
   const code = STATE.org?.invite_code || STATE.org?.id?.slice(0,6).toUpperCase() || '——';
   const notifEmail = STATE.org?.notification_email || '';
   const notifTime = STATE.org?.notification_time || '08:00';
+
+  let teamHtml = '';
+  if (isAdmin()) {
+    const { data: members } = await sb.from('profiles')
+      .select('id, full_name, role')
+      .eq('org_id', STATE.org.id)
+      .order('full_name');
+    const roleLabel = { owner: '👑 Owner', admin: '🔑 Admin', staff: '👤 Staff' };
+    const rows = (members || []).map(m => {
+      const isSelf = m.id === STATE.user.id;
+      const isOwner = m.role === 'owner';
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:14px;font-weight:600">${m.full_name}${isSelf ? ' <span style="font-size:11px;color:var(--text-muted)">(you)</span>' : ''}</div>
+          <div style="font-size:12px;color:var(--text-muted)">${roleLabel[m.role] || m.role}</div>
+        </div>
+        ${!isSelf && !isOwner ? `<div style="display:flex;gap:4px">
+          ${m.role === 'staff' ? `<button class="btn btn-secondary btn-sm" onclick="setMemberRole('${m.id}','admin')">Make Admin</button>` : ''}
+          ${m.role === 'admin' ? `<button class="btn btn-danger btn-sm" onclick="setMemberRole('${m.id}','staff')">Remove Admin</button>` : ''}
+        </div>` : ''}
+      </div>`;
+    }).join('');
+    teamHtml = `<div class="card"><div class="card-title">👥 Team</div>${rows}</div>`;
+  }
+
   setContent(`
     <div class="card"><div class="card-title">☕ ${STATE.org?.name}</div>
       <div style="font-size:14px;color:var(--text-muted)">${STATE.profile?.full_name} · ${STATE.profile?.role}</div>
@@ -705,9 +740,17 @@ function renderSettings() {
         <button class="btn btn-primary btn-sm" style="width:auto;white-space:nowrap" onclick="addCategory()">Add</button>
       </div>
     </div>
+    ${teamHtml}
     <div class="card"><div class="card-title">⚙️ Account</div>
       <button class="btn btn-danger" onclick="doLogout()">Log Out</button>
     </div>`);
+}
+
+async function setMemberRole(profileId, newRole) {
+  const { error } = await sb.from('profiles').update({ role: newRole }).eq('id', profileId);
+  if (error) return showToast('Error: ' + error.message);
+  showToast('Role updated ✅');
+  renderSettings();
 }
 
 async function saveNotificationSettings() {
