@@ -507,6 +507,12 @@ async function renderLog() {
     }
   }
 
+  // Anything else running out
+  html += '<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">' +
+    '<label style="font-weight:600;font-size:14px;display:block;margin-bottom:6px">Anything else running out?</label>' +
+    '<textarea id="shift-note" rows="2" placeholder="e.g. salt, honey, napkins… (optional)" style="width:100%;resize:vertical;font-size:14px">' + (STATE.org.last_shift_note_date === new Date().toLocaleDateString('en-CA') ? (STATE.org.last_shift_note || '') : '') + '</textarea>' +
+    '</div>';
+
   // Single save button
   if (countItems.length || itemsToLog.length) html += '<div class="btn-row" style="margin-top:16px"><button class="btn btn-primary" onclick="saveAll()">Save Status Check</button></div>';
 
@@ -558,7 +564,13 @@ async function saveAll() {
     Object.entries(st).forEach(([id, status]) => promises.push(sb.from('items').update({ status }).eq('id', id)));
     promises.push(sb.from('stock_logs').insert(Object.entries(st).map(([item_id, status]) => ({ org_id: STATE.org.id, item_id, logged_by: STATE.user.id, log_type: 'status_check', status }))));
   }
+  // Save shift note
+  const shiftNote = document.getElementById('shift-note')?.value.trim() || null;
+  const todayDate = new Date().toLocaleDateString('en-CA');
+  promises.push(sb.from('organisations').update({ last_shift_note: shiftNote, last_shift_note_date: todayDate }).eq('id', STATE.org.id));
+
   await Promise.all(promises);
+  if (shiftNote !== null) { STATE.org.last_shift_note = shiftNote; STATE.org.last_shift_note_date = todayDate; }
   pendingSt = {};
   showToast('Saved! ✅');
   await loadData();
