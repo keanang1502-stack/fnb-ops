@@ -572,7 +572,7 @@ async function saveAll() {
   await Promise.all(promises);
   if (shiftNote !== null) { STATE.org.last_shift_note = shiftNote; STATE.org.last_shift_note_date = todayDate; }
   pendingSt = {};
-  showToast('Saved! ✅');
+  showSaveConfirmation();
   await loadData();
   renderLog();
 }
@@ -1082,6 +1082,18 @@ async function saveSupplier(id) {
 // ── MODAL & TOAST ─────────────────────────────────────────────
 function showModal(html) { document.getElementById('modal-container').innerHTML = `<div class="modal-overlay" onclick="if(event.target.classList.contains('modal-overlay'))closeModal()"><div class="modal">${html}</div></div>`; }
 function closeModal() { document.getElementById('modal-container').innerHTML = ''; }
+function showSaveConfirmation() {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML = '<div style="background:#fff;border-radius:16px;padding:32px 28px;text-align:center;max-width:280px;width:90%">' +
+    '<div style="font-size:48px;margin-bottom:12px">✅</div>' +
+    '<div style="font-size:18px;font-weight:700;margin-bottom:8px">Status check saved!</div>' +
+    '<div style="font-size:14px;color:#666;margin-bottom:20px">Great job. See you tomorrow!</div>' +
+    '<button onclick="this.closest(\'div[style*=inset]\').remove()" style="background:var(--brand);color:#fff;border:none;border-radius:8px;padding:12px 32px;font-size:15px;font-weight:600;width:100%">Done</button>' +
+    '</div>';
+  document.body.appendChild(overlay);
+}
+
 function showToast(msg) {
   const t = document.createElement('div');
   t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1A1A2E;color:#fff;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:600;z-index:999;pointer-events:none;white-space:nowrap';
