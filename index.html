@@ -407,9 +407,16 @@ function itemRow(item) {
     '<div class="item-name">'+item.name+'</div>' +
     '<div class="item-meta">'+[item.category, item.suppliers?.name, hint].filter(Boolean).join(' · ')+'</div>' +
     '</div>' +
-    '<span class="badge '+(bmap[item.status]||'badge-ok')+'">'+statusLabel+'</span>' +
+    '<span class="badge '+(bmap[item.status]||'badge-ok')+'" style="cursor:pointer" onclick="toggleStatusPicker(\''+item.id+'\')" title="Click to change status">'+statusLabel+'</span>' +
     '<button class="btn-ghost btn-sm" onclick="showEditItemModal(\''+item.id+'\')">Edit</button>' +
-    '</div>';
+    '</div>' +
+    '<div id="status-picker-'+item.id+'" style="display:none;padding:6px 0 4px;border-top:1px solid var(--border)">' +
+    '<div style="font-size:12px;color:var(--text-muted);margin-bottom:6px">Override status:</div>' +
+    '<div style="display:flex;gap:6px">' +
+    '<button class="status-btn low'+(item.status==='low'?' selected':'')+'" style="flex:1;font-size:12px" onclick="overrideStatus(\''+item.id+'\',\'low\')">Low</button>' +
+    '<button class="status-btn ok'+(item.status==='ok'||!item.status?' selected':'')+'" style="flex:1;font-size:12px" onclick="overrideStatus(\''+item.id+'\',\'ok\')">OK</button>' +
+    '<button class="status-btn full'+(item.status==='full'?' selected':'')+'" style="flex:1;font-size:12px" onclick="overrideStatus(\''+item.id+'\',\'full\')">Full</button>' +
+    '</div></div>';
 }
 
 function filterItems(q) {
@@ -638,7 +645,10 @@ async function renderOrders() {
     const itemRows = g.items.map(i =>
       `<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)">
         <span style="font-size:14px">• ${i.name}${i.reorder_qty?' — '+i.reorder_qty+' '+(i.unit||''):''}</span>
-        <button class="btn btn-secondary btn-sm" style="white-space:nowrap;margin-left:8px" onclick="markItemOrdered('${i.id}')">✓ Ordered</button>
+        <div style="display:flex;gap:6px;margin-left:8px">
+          <button class="btn btn-secondary btn-sm" style="white-space:nowrap" onclick="markItemOrdered('${i.id}')">✓ Ordered</button>
+          <button class="btn-ghost btn-sm" style="white-space:nowrap;color:var(--text-muted)" onclick="overrideStatus('${i.id}','ok')">✕ Dismiss</button>
+        </div>
       </div>`
     ).join('');
     html += `<div class="order-group">
@@ -702,6 +712,20 @@ async function markItemOrdered(id) {
 async function markItemLow(id) {
   await sb.from('items').update({ status: 'low' }).eq('id', id);
   await loadData(); renderOrders();
+}
+
+function toggleStatusPicker(id) {
+  const el = document.getElementById('status-picker-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+async function overrideStatus(id, status) {
+  await sb.from('items').update({ status }).eq('id', id);
+  showToast('Status updated ✅');
+  await loadData();
+  // re-render whichever page is active
+  const active = document.querySelector('.nav-item.active')?.id?.replace('nav-', '');
+  if (active) ({ inventory: renderInventory, orders: renderOrders })[active]?.();
 }
 
 async function markSent(sid) {
