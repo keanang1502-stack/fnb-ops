@@ -406,6 +406,7 @@ function itemRow(item) {
     '<div class="item-info">' +
     '<div class="item-name">'+item.name+'</div>' +
     '<div class="item-meta">'+[item.category, item.suppliers?.name, hint].filter(Boolean).join(' · ')+'</div>' +
+    (item.track_count ? '<div style="font-size:13px;font-weight:600;color:var(--brand);margin-top:2px">Count: '+(item.current_count ?? 0)+' '+(item.unit||'')+'</div>' : '') +
     '</div>' +
     '<span class="badge '+(bmap[item.status]||'badge-ok')+'" style="cursor:pointer" onclick="toggleStatusPicker(\''+item.id+'\')" title="Click to change status">'+statusLabel+'</span>' +
     '<button class="btn-ghost btn-sm" onclick="showEditItemModal(\''+item.id+'\')">Edit</button>' +
@@ -1056,6 +1057,12 @@ async function saveItem(id) {
     track_count: document.getElementById('m-track')?.checked || false,
     current_count: parseFloat(document.getElementById('m-count')?.value) || 0,
   };
+  // Auto-set status from current_count and thresholds
+  if (p.current_count != null && p.low_threshold != null) {
+    if (p.current_count < p.low_threshold) p.status = 'low';
+    else if (p.high_threshold != null && p.current_count >= p.high_threshold) p.status = 'full';
+    else p.status = 'ok';
+  }
   if (!p.name) return showToast('Please enter a name');
   if (id) await sb.from('items').update(p).eq('id', id);
   else await sb.from('items').insert(p);
