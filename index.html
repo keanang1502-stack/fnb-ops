@@ -440,9 +440,13 @@ async function renderLog() {
   const today = new Date().getDay();
   const pendingDelivery = items.filter(i => i.status === 'ordered');
   const countItems = items.filter(i => i.track_count);
+  const fpSup = today === 0 ? STATE.suppliers.find(s => s.name.toLowerCase().includes('fairprice')) : null;
+  const fpItems = fpSup ? items.filter(i => i.supplier_id === fpSup.id && i.status !== 'ordered' && !i.track_count) : [];
+  const fpItemIds = new Set(fpItems.map(i => i.id));
   const itemsToLog = items.filter(i => {
     if (i.status === 'ordered') return false;
     if (i.track_count) return false;
+    if (today === 0 && fpItemIds.has(i.id)) return false;
     if (i.log_days && i.log_days.length > 0) return i.log_days.includes(today);
     return i.type === 'food' || today === 0;
   });
@@ -474,16 +478,14 @@ async function renderLog() {
   // Count items first inside the card
   if (countItems.length) {
     countItems.forEach(item => {
-      const opening = item.current_count || 0;
+      const current = item.current_count || 0;
+      const isLow = item.low_threshold != null && current < item.low_threshold;
       html += '<div style="padding:12px 0;border-bottom:1px solid var(--border);margin-top:8px">' +
         '<div style="font-weight:600;font-size:15px;margin-bottom:8px">' + item.name +
-        ' <span style="font-size:13px;color:var(--text-muted);font-weight:400">Opening: ' + opening + ' ' + (item.unit||'') + '</span></div>' +
-        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">' +
-        '<div><label style="margin:0 0 4px">Sold</label><input id="cnt-sold-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
-        '<div><label style="margin:0 0 4px">Wastage/Staff Meal</label><input id="cnt-wst-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
-        '<div><label style="margin:0 0 4px">Delivery</label><input id="cnt-del-' + item.id + '" type="number" min="0" value="0" oninput="updateClosing(\'' + item.id + '\')" style="text-align:center"/></div>' +
+        (item.low_threshold ? ' <span style="font-size:12px;color:var(--text-muted);font-weight:400">min: ' + item.low_threshold + ' ' + (item.unit||'') + '</span>' : '') +
         '</div>' +
-        '<div style="margin-top:8px;font-size:14px;font-weight:600;color:var(--brand)">Closing: <span id="cnt-close-' + item.id + '">' + opening + '</span> ' + (item.unit||'') + '</div>' +
+        '<label style="margin:0 0 4px;font-size:13px">Stock Count' + (item.unit ? ' (' + item.unit + ')' : '') + '</label>' +
+        '<input id="cnt-count-' + item.id + '" type="number" min="0" placeholder="0" value="' + current + '" style="text-align:center"/>' +
         '</div>';
     });
   }
@@ -526,6 +528,24 @@ async function renderLog() {
 
   html += '</div>';
 
+  // FairPrice Sunday section
+  if (today === 0 && fpItems.length) {
+    html += '<div class="card"><div class="card-title">🛒 FairPrice Stock Check</div>' +
+      '<p style="font-size:13px;color:var(--text-muted);margin-bottom:8px">Sunday check — update stock levels for FairPrice items.</p>';
+    fpItems.forEach(item => {
+      const labels = getThresholdLabels(item);
+      html += '<div class="log-item-row">' +
+        '<div class="item-name">' + item.name + '</div>' +
+        (item.unit ? '<div class="item-meta">' + item.unit + '</div>' : '') +
+        '<div class="status-row">' +
+        '<button class="status-btn low ' + (item.status==='low'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'low\')">' + labels.low + '</button>' +
+        '<button class="status-btn ok ' + (!item.status||item.status==='ok'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'ok\')">' + labels.ok + '</button>' +
+        '<button class="status-btn full ' + (item.status==='full'?'selected':'') + '" onclick="setSt(this,\'' + item.id + '\',\'full\')">' + labels.full + '</button>' +
+        '</div></div>';
+    });
+    html += '</div>';
+  }
+
   setContent(html);
 }
 
@@ -553,15 +573,12 @@ async function saveAll() {
   if (countItems.length) {
     const todayDate = new Date().toLocaleDateString('en-CA');
     countItems.forEach(item => {
-      const sold = parseFloat(document.getElementById('cnt-sold-'+item.id)?.value) || 0;
-      const wst = parseFloat(document.getElementById('cnt-wst-'+item.id)?.value) || 0;
-      const del = parseFloat(document.getElementById('cnt-del-'+item.id)?.value) || 0;
+      const closing = parseFloat(document.getElementById('cnt-count-'+item.id)?.value) ?? (item.current_count || 0);
       const opening = item.current_count || 0;
-      const closing = Math.max(0, opening - sold - wst + del);
       const newStatus = item.low_threshold != null && closing < item.low_threshold ? 'low' : 'ok';
       promises.push(
         sb.from('items').update({ current_count: closing, status: newStatus }).eq('id', item.id),
-        sb.from('item_count_logs').upsert({ item_id: item.id, org_id: STATE.org.id, date: todayDate, opening_count: opening, sold, wastage: wst, delivery: del, closing_count: closing, logged_by: STATE.user.id }, { onConflict: 'item_id,date' })
+        sb.from('item_count_logs').upsert({ item_id: item.id, org_id: STATE.org.id, date: todayDate, opening_count: opening, sold: 0, wastage: 0, delivery: 0, closing_count: closing, logged_by: STATE.user.id }, { onConflict: 'item_id,date' })
       );
     });
   }
